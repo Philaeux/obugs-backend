@@ -14,6 +14,12 @@ interface Software : Entity<Software> {
 
     val code: String
     val name: String
+
+    data class SoftwareJson(val code: String, val name: String)
+
+    fun toJson(): SoftwareJson {
+        return SoftwareJson(code, name)
+    }
 }
 
 /**

@@ -27,6 +27,7 @@ dependencies {
     // Ktor
     implementation("io.ktor:ktor-server-core:1.6.7")
     implementation("io.ktor:ktor-server-netty:1.6.7")
+    implementation("io.ktor:ktor-gson:1.6.7")
     // ORM
     implementation("org.ktorm:ktorm-core:3.4.1")
     implementation("org.ktorm:ktorm-support-postgresql:3.4.1")
