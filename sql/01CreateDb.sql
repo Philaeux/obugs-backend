@@ -1,9 +1,9 @@
-DROP TABLE software;
-DROP TABLE users;
+DROP TABLE contributions;
+DROP TABLE bugs;
 DROP TABLE roles;
 DROP TABLE labels;
-DROP TABLE bugs;
-DROP TABLE contributions;
+DROP TABLE users;
+DROP TABLE software;
 
 CREATE TABLE software (
   code varchar(16) NOT NULL PRIMARY KEY,
@@ -34,7 +34,6 @@ CREATE TABLE bugs (
   id int NOT NULL,
   software_code varchar(16) NOT NULL references software(code),
   title varchar(255) NOT NULL,
-  description varchar(255) NOT NULL,
   status varchar(16) NOT NULL,
   PRIMARY KEY (id, software_code)
 );
@@ -47,3 +46,5 @@ CREATE TABLE contributions (
   PRIMARY KEY (id, bugs_id),
   FOREIGN KEY (software_code, bugs_id) references bugs(software_code, id)
 );
+
+INSERT INTO software(code, name) VALUES('dota-2', 'Dota 2');

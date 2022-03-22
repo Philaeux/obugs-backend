@@ -23,9 +23,16 @@ repositories {
 }
 
 dependencies {
+    implementation("ch.qos.logback:logback-classic:1.2.11")
+    // Ktor
     implementation("io.ktor:ktor-server-core:1.6.7")
     implementation("io.ktor:ktor-server-netty:1.6.7")
-    implementation("ch.qos.logback:logback-classic:1.2.5")
+    // ORM
+    implementation("org.ktorm:ktorm-core:3.4.1")
+    implementation("org.ktorm:ktorm-support-postgresql:3.4.1")
+    implementation("org.postgresql:postgresql:42.3.3")
+    // Configuration
+    implementation("com.natpryce:konfig:1.6.10.0")
 
     testImplementation(kotlin("test"))
 }
