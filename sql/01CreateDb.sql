@@ -3,12 +3,21 @@ DROP TABLE bugs;
 DROP TABLE roles;
 DROP TABLE labels;
 DROP TABLE users;
-DROP TABLE software;
+DROP TABLE softwares;
 
-CREATE TABLE software (
-  code varchar(16) NOT NULL PRIMARY KEY,
+CREATE TABLE softwares (
+  code varchar(16) PRIMARY KEY,
   name varchar(255) NOT NULL
 );
+
+CREATE TABLE bugs (
+  id BIGSERIAL PRIMARY KEY,
+  software_code varchar(16) NOT NULL references softwares(code),
+  title varchar(255) NOT NULL,
+  status varchar(32) NOT NULL
+);
+CREATE INDEX bugs_order ON bugs(software_code, id);
+
 
 CREATE TABLE users (
   name varchar(32) NOT NULL PRIMARY KEY,
@@ -30,13 +39,7 @@ CREATE TABLE labels (
   PRIMARY KEY (tag_code, software_code)
 );
 
-CREATE TABLE bugs (
-  id int NOT NULL,
-  software_code varchar(16) NOT NULL references software(code),
-  title varchar(255) NOT NULL,
-  status varchar(16) NOT NULL,
-  PRIMARY KEY (id, software_code)
-);
+
 
 CREATE TABLE contributions (
   id int NOT NULL,

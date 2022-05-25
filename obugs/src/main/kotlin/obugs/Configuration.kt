@@ -1,4 +1,4 @@
-package org.thecluster.obugs
+package obugs
 
 import com.natpryce.konfig.*
 import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
