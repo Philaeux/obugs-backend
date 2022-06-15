@@ -1,6 +1,7 @@
 package obugs
 
 import com.natpryce.konfig.*
+import com.natpryce.konfig.Configuration
 import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
 
 /**
@@ -9,9 +10,21 @@ import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
  * @property config configuration loaded using the key options
  */
 object Configuration {
-    private val config = systemProperties() overriding
-            EnvironmentVariables() overriding
-            ConfigurationProperties.fromResource("application.conf")
+    var config = loadConfig("application.dev.conf")
+
+    fun setDev() {
+        config = loadConfig("application.dev.conf")
+    }
+
+    fun setProd() {
+        config = loadConfig("application.prod.conf")
+    }
+
+    fun loadConfig(ressourceName: String): Configuration {
+        return systemProperties() overriding
+                EnvironmentVariables() overriding
+                ConfigurationProperties.fromResource(ressourceName)
+    }
 
     private val ktor_port = Key("ktor.port", intType)
     private val database_host = Key("database.host", stringType)
