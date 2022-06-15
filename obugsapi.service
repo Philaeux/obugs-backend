@@ -1,0 +1,15 @@
+[Unit]
+Description= Obugs API
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=philaeux
+ExecStart=/usr/bin/env /home/prod/obugs-backend/obugs/build/install/obugs/bin/obugs --prod
+
+[Install]
+WantedBy=multi-user.target
+
