@@ -20,7 +20,7 @@ object Configuration {
         config = loadConfig("application.prod.conf")
     }
 
-    fun loadConfig(ressourceName: String): Configuration {
+    private fun loadConfig(ressourceName: String): Configuration {
         return systemProperties() overriding
                 EnvironmentVariables() overriding
                 ConfigurationProperties.fromResource(ressourceName)
