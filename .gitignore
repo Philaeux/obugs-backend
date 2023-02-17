@@ -1,3 +1,4 @@
 .idea
-obugs/build
-obugs/.gradle
+.wenv
+.venv
+src/db.sqlite3
