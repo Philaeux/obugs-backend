@@ -2,7 +2,7 @@ from django.db import models
 
 
 class User(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     username = models.CharField(unique=True, max_length=255)
 
 
@@ -13,13 +13,13 @@ class Software(models.Model):
 
 
 class Tag(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     name = models.CharField(max_length=255)
     software = models.ForeignKey(Software, on_delete=models.CASCADE)
 
 
 class Bug(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     software = models.ForeignKey(Software, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -32,14 +32,14 @@ class Bug(models.Model):
 
 
 class BugVote(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
     rating = models.IntegerField(default=2)
 
 
 class BugComment(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
     comment = models.TextField()
@@ -47,7 +47,7 @@ class BugComment(models.Model):
 
 
 class Petition(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     bug = models.ForeignKey(Bug, on_delete=models.CASCADE)
     field = models.CharField(max_length=50, default="title")
@@ -59,7 +59,7 @@ class Petition(models.Model):
 
 
 class BugPetitionVotes(models.Model):
-    id = models.IntegerField(primary_key=True)
+    id = models.BigAutoField(primary_key=True)
     user = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
     petition = models.ForeignKey(Petition, on_delete=models.CASCADE)
     rating = models.IntegerField(default=1)

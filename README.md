@@ -21,3 +21,6 @@ pip install -r requirements.txt
 "$(get-location)" > .\.wenv\Lib\site-packages\d2notes.pth
 python main.py
 ```
+
+python manage.py makemigrations backend
+python manage.py sqlmigrate backend 0001
