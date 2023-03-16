@@ -10,9 +10,9 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 def get_software_list(request):
-    software_items = Software.objects.all()
+    software_items = Software.objects.all().values()
     data = {
-        "payload": list(software_items.values())
+        "payload": list(software_items)
     }
     return JsonResponse(data)
 
@@ -32,6 +32,26 @@ def get_software_details(request, software_id):
         }}
     return JsonResponse(data)
 
+
+def get_software_bugs(request, software_id):
+    software = Software.objects.filter(id=software_id).first()
+    if software is None:
+        data = {
+            "error": "SoftwareNotFound",
+            "payload": []
+        }
+    else:
+        status = request.GET.get("status", "")
+        if status not in ["NEW", "CONFIRMED", "FIXED", "EXPECTED", "PROPOSAL", "DROPPED"]:
+            bug_query = Bug.objects.filter(software=software)
+        else:
+            bug_query = Bug.objects.filter(software=software, status=status)
+        bugs = bug_query.order_by("-updated_at").values()
+
+        data = {
+            "payload": list(bugs[0:20])
+        }
+    return JsonResponse(data)
 
 @csrf_exempt
 def post_bug_add(request):
