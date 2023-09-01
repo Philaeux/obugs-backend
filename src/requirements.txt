@@ -1,0 +1,6 @@
+alembic
+strawberry-sqlalchemy-mapper
+strawberry
+SQLAlchemy
+PyJWT
+tornado

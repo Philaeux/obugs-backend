@@ -1,4 +1,3 @@
 .idea
-.wenv
-.venv
-src/db.sqlite3
+src/.wvenv
+src/.venv
