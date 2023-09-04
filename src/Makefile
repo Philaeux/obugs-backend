@@ -4,22 +4,22 @@
 
 ## Create a virtual environment and install dependencies
 win-install:
-	python -m venv .wvenv
-	.\.wvenv\Scripts\python.exe -m pip install --upgrade pip
-	.\.wvenv\Scripts\python.exe -m pip install -r .\requirements.txt
-	"$(get-location)" > .\.wvenv\Lib\site-packages\obugs.pth
+	python -m venv .env
+	.\.env\Scripts\python.exe -m pip install --upgrade pip
+	.\.env\Scripts\python.exe -m pip install -r .\requirements.txt
+	"$(get-location)" > .\.env\Lib\site-packages\obugs.pth
 
 ## Run the development files
 win-run:
-	.\.wvenv\Scripts\python.exe .\main.py
+	.\.env\Scripts\python.exe .\main.py
 
 ## Remove development environment
 win-clean:
-	rm -r .\.wvenv\
+	rm -r .\.env\
 
 # Generate database migrations
 win-gen-migrations:
-	.\.wvenv\Scripts\alembic.exe revision --autogenerate
+	.\.env\Scripts\alembic.exe revision --autogenerate
 
 #######################################
 #          Unix environment           #

@@ -9,30 +9,6 @@ from .models import User, Software, Bug, BugVote
 from django.views.decorators.csrf import csrf_exempt
 
 
-def get_software_list(request):
-    software_items = Software.objects.all().values()
-    data = {
-        "payload": list(software_items)
-    }
-    return JsonResponse(data)
-
-
-def get_software_details(request, software_id):
-    software = Software.objects.filter(id=software_id).first()
-    if software is None:
-        data = {
-            "error": "SoftwareNotFound",
-            "payload": None
-        }
-    else:
-        data = {"payload": {
-            "id": software.id,
-            "fullname": software.fullname,
-            "editor": software.editor
-        }}
-    return JsonResponse(data)
-
-
 def get_software_bugs(request, software_id):
     software = Software.objects.filter(id=software_id).first()
     if software is None:

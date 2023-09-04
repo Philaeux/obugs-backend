@@ -1,6 +1,7 @@
 alembic
-strawberry-sqlalchemy-mapper
-strawberry
+strawberry-graphql
 SQLAlchemy
-PyJWT
-tornado
+flask-jwt-extended
+Flask
+Tornado
+Werkzeug
