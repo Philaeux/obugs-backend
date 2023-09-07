@@ -1,5 +1,4 @@
 import os
-import sys
 from pathlib import Path
 
 from alembic import command
@@ -34,26 +33,18 @@ class Database:
             cls._instance = object.__new__(cls)
         return cls._instance
 
-    def __init__(self):
+    def __init__(self, check_migrations=False):
         """Defines all necessary ressources (URI & engine) and create database if necessary."""
 
-        file_uri = ""
-        alembic = ""
-        migrations = ""
-
-        if getattr(sys, 'frozen', False):
-            file_uri = os.path.dirname(sys.executable)
-            alembic = Path(file_uri) / "alembic.ini"
-            migrations = Path(file_uri) / "alembic"
-        elif __file__:
-            file_uri = os.path.dirname(__file__)
-            alembic = Path(file_uri) / ".." / ".." / ".." / "alembic.ini"
-            migrations = Path(file_uri) / ".." / ".." / "alembic"
+        file_uri = os.path.dirname(__file__)
+        alembic = Path(file_uri) / ".." / ".." / ".." / "alembic.ini"
+        migrations = Path(file_uri) / ".." / ".." / "alembic"
         self.uri = f"sqlite+pysqlite:///{file_uri}/sqlite.db"
         self.engine = create_engine(self.uri, echo=False)
 
         # Upgrade application to heads
-        alembic_cfg = Config(alembic)
-        alembic_cfg.set_main_option('script_location', str(migrations))
-        alembic_cfg.set_main_option('sqlalchemy.url', self.uri)
-        command.upgrade(alembic_cfg, 'head')
+        if check_migrations:
+            alembic_cfg = Config(alembic)
+            alembic_cfg.set_main_option('script_location', str(migrations))
+            alembic_cfg.set_main_option('sqlalchemy.url', self.uri)
+            command.upgrade(alembic_cfg, 'head')

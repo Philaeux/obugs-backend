@@ -1,4 +1,5 @@
 # Project
+src/obugs.ini
 src/obugs/data/database/sqlite.db
 
 # Byte-compiled / optimized / DLL files
