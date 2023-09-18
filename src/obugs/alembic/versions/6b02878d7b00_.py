@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: d83c5c048b4f
+Revision ID: 6b02878d7b00
 Revises: 
-Create Date: 2023-09-07 02:54:37.281203
+Create Date: 2023-09-18 16:57:37.597887
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'd83c5c048b4f'
+revision: str = '6b02878d7b00'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,10 +24,11 @@ def upgrade() -> None:
     sa.Column('id', sa.String(), nullable=False),
     sa.Column('full_name', sa.String(), nullable=False),
     sa.Column('editor', sa.String(), nullable=False),
+    sa.Column('description', sa.String(), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
     sa.Column('username', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
@@ -36,11 +37,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('entry',
-    sa.Column('id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
     sa.Column('software_id', sa.String(), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=False),
-    sa.Column('status', sa.Enum('NEW', 'OPEN', 'FIXED', 'CLOSED', name='entrystatus'), nullable=False),
+    sa.Column('illustration', sa.Text(), nullable=False),
+    sa.Column('status', sa.Enum('NEW', 'CONFIRMED', 'WIP', 'CHECK', 'FIXED', 'EXPECTED', 'DUPLICATE', 'CLOSED', name='entrystatus'), nullable=False),
     sa.Column('rating_total', sa.BigInteger(), nullable=False),
     sa.Column('rating_count', sa.BigInteger(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
@@ -49,37 +51,39 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('tag',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('software_id', sa.String(), nullable=False),
+    sa.Column('font_color', sa.String(), nullable=False),
+    sa.Column('background_color', sa.String(), nullable=False),
     sa.ForeignKeyConstraint(['software_id'], ['software.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('association_tags_entries',
     sa.Column('tag_id', sa.Integer(), nullable=False),
-    sa.Column('entry_id', sa.BigInteger(), nullable=False),
+    sa.Column('entry_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['entry_id'], ['entry.id'], ),
     sa.ForeignKeyConstraint(['tag_id'], ['tag.id'], ),
     sa.PrimaryKeyConstraint('tag_id', 'entry_id')
     )
     op.create_table('entry_message',
-    sa.Column('id', sa.BigInteger(), nullable=False),
-    sa.Column('entry_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
+    sa.Column('entry_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('type', sa.String(), nullable=False),
+    sa.Column('state_after', sa.String(), nullable=True),
     sa.Column('comment', sa.String(), nullable=True),
     sa.Column('state_before', sa.String(), nullable=True),
-    sa.Column('state_after', sa.String(), nullable=True),
-    sa.Column('rating', sa.BigInteger(), nullable=False),
-    sa.Column('rating_count', sa.BigInteger(), nullable=False),
+    sa.Column('rating', sa.BigInteger(), nullable=True),
+    sa.Column('rating_count', sa.BigInteger(), nullable=True),
     sa.ForeignKeyConstraint(['entry_id'], ['entry.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('entry_vote',
-    sa.Column('id', sa.BigInteger(), nullable=False),
-    sa.Column('entry_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
+    sa.Column('entry_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('rating', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['entry_id'], ['entry.id'], ),
@@ -87,8 +91,8 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('entry_petition_vote',
-    sa.Column('id', sa.BigInteger(), nullable=False),
-    sa.Column('entry_petition_id', sa.BigInteger(), nullable=False),
+    sa.Column('id', sa.Integer(), sa.Identity(always=False), nullable=False),
+    sa.Column('entry_petition_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('rating', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['entry_petition_id'], ['entry_message.id'], ),

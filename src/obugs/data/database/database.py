@@ -12,7 +12,7 @@ from obugs.data.database.entity_user import UserEntity
 from obugs.data.database.entity_tag import TagEntity
 from obugs.data.database.entity_entry import EntryEntity, EntryStatus
 from obugs.data.database.entity_entry_vote import EntryVoteEntity
-from obugs.data.database.entity_entry_message import EntryCommentEntity, EntryMessageEntity, EntryPetitionEntity
+from obugs.data.database.entity_entry_message import EntryMessageCommentEntity, EntryMessageEntity, EntryMessagePetitionEntity, EntryMessageCreationEntity
 from obugs.data.database.entity_entry_petition_vote import EntryPetitionVoteEntity
 
 

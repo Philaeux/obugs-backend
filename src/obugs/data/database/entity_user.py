@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlalchemy import String
+from sqlalchemy import String, Identity
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from obugs.data.database.entity_base import BaseEntity
@@ -9,7 +9,7 @@ from obugs.data.database.entity_base import BaseEntity
 class UserEntity(BaseEntity):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
     username: Mapped[str] = mapped_column()
     password: Mapped[str] = mapped_column()
     email: Mapped[str] = mapped_column()

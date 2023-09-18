@@ -7,7 +7,8 @@ from alembic import context
 
 from obugs.data.database.database import (
     BaseEntity, association_tags_entries, SoftwareEntity, UserEntity, TagEntity, EntryEntity, EntryVoteEntity,
-    EntryStatus, EntryCommentEntity, EntryPetitionEntity, EntryMessageEntity, EntryPetitionVoteEntity
+    EntryStatus, EntryMessageCommentEntity, EntryMessagePetitionEntity, EntryMessageEntity, EntryMessageCreationEntity,
+    EntryPetitionVoteEntity
 )
 
 # this is the Alembic Config object, which provides

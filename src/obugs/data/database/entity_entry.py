@@ -3,25 +3,30 @@ import enum
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, BigInteger, Text
+from sqlalchemy import ForeignKey, BigInteger, Text, Identity
 
 from obugs.data.database.entity_base import BaseEntity, association_tags_entries
 
 
 class EntryStatus (enum.Enum):
     NEW = "NEW"
-    OPEN = "OPEN"
+    CONFIRMED = "CONFIRMED"
+    WIP = "WIP"
+    CHECK = "CHECK"
     FIXED = "FIXED"
+    EXPECTED = "EXPECTED"
+    DUPLICATE = "DUPLICATE"
     CLOSED = "CLOSED"
 
 
 class EntryEntity(BaseEntity):
     __tablename__ = "entry"
 
-    id: Mapped[int] = mapped_column(BigInteger(), primary_key=True)
+    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
     software_id: Mapped[str] = mapped_column(ForeignKey("software.id"))
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column(Text())
+    illustration: Mapped[str] = mapped_column(Text())
     status: Mapped[EntryStatus] = mapped_column()
     rating_total: Mapped[int] = mapped_column(BigInteger())
     rating_count: Mapped[int] = mapped_column(BigInteger())
@@ -33,11 +38,12 @@ class EntryEntity(BaseEntity):
     messages: Mapped[List["EntryMessageEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
     votes: Mapped[List["EntryVoteEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
 
-    def __init__(self, software_id, title, description):
+    def __init__(self, software_id, title, description, illustration):
         super().__init__()
         self.software_id = software_id
         self.title = title
         self.description = description
+        self.illustration = illustration
         self.status = EntryStatus.NEW
         self.rating_total = 2
         self.rating_count = 1
