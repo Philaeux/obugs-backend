@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Identity
 
-from obugs.data.database.entity_base import BaseEntity
+from obugs.database.entity_base import BaseEntity
 
 
 class EntryPetitionVoteEntity(BaseEntity):

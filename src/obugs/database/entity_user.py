@@ -3,7 +3,8 @@ from typing import List
 from sqlalchemy import String, Identity
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from obugs.data.database.entity_base import BaseEntity
+from obugs.database.entity_base import BaseEntity
+from obugs.graphql.types.user import User
 
 
 class UserEntity(BaseEntity):
@@ -28,3 +29,10 @@ class UserEntity(BaseEntity):
         self.email = email
         self.is_activated = False
         self.activation_token = activation_token
+
+    @staticmethod
+    def gql(self):
+        return User(
+            id=self.id,
+            username=self.username
+        )

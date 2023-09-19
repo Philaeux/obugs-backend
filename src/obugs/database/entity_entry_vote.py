@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Identity
 
-from obugs.data.database.entity_base import BaseEntity
+from obugs.database.entity_base import BaseEntity
+from obugs.graphql.types.entry_vote import EntryVote
 
 
 class EntryVoteEntity(BaseEntity):
@@ -14,3 +15,11 @@ class EntryVoteEntity(BaseEntity):
 
     entry: Mapped["EntryEntity"] = relationship(back_populates="votes")
     user: Mapped["UserEntity"] = relationship(back_populates="votes")
+
+    def gql(self):
+        return EntryVote(
+            id=self.id,
+            entry_id=self.entry_id,
+            user_id=self.user_id,
+            rating=self.rating
+        )

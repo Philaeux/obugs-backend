@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from obugs.data.database.database import (
+from obugs.database.database import (
     BaseEntity, association_tags_entries, SoftwareEntity, UserEntity, TagEntity, EntryEntity, EntryVoteEntity,
     EntryStatus, EntryMessageCommentEntity, EntryMessagePetitionEntity, EntryMessageEntity, EntryMessageCreationEntity,
     EntryPetitionVoteEntity

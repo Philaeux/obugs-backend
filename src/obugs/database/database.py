@@ -6,14 +6,14 @@ from alembic.config import Config
 
 from sqlalchemy import create_engine
 
-from obugs.data.database.entity_base import BaseEntity, association_tags_entries
-from obugs.data.database.entity_software import SoftwareEntity
-from obugs.data.database.entity_user import UserEntity
-from obugs.data.database.entity_tag import TagEntity
-from obugs.data.database.entity_entry import EntryEntity, EntryStatus
-from obugs.data.database.entity_entry_vote import EntryVoteEntity
-from obugs.data.database.entity_entry_message import EntryMessageCommentEntity, EntryMessageEntity, EntryMessagePetitionEntity, EntryMessageCreationEntity
-from obugs.data.database.entity_entry_petition_vote import EntryPetitionVoteEntity
+from obugs.database.entity_base import BaseEntity, association_tags_entries
+from obugs.database.entity_software import SoftwareEntity
+from obugs.database.entity_user import UserEntity
+from obugs.database.entity_tag import TagEntity
+from obugs.database.entity_entry import EntryEntity, EntryStatus
+from obugs.database.entity_entry_vote import EntryVoteEntity
+from obugs.database.entity_entry_message import EntryMessageCommentEntity, EntryMessageEntity, EntryMessagePetitionEntity, EntryMessageCreationEntity
+from obugs.database.entity_entry_petition_vote import EntryPetitionVoteEntity
 
 
 class Database:
@@ -36,10 +36,10 @@ class Database:
     def __init__(self, check_migrations=False):
         """Defines all necessary ressources (URI & engine) and create database if necessary."""
 
-        file_uri = os.path.dirname(__file__)
-        alembic = Path(file_uri) / ".." / ".." / ".." / "alembic.ini"
-        migrations = Path(file_uri) / ".." / ".." / "alembic"
-        self.uri = f"sqlite+pysqlite:///{file_uri}/sqlite.db"
+        dir_uri = os.path.dirname(__file__)
+        alembic = Path(dir_uri) / ".." / ".." / "alembic.ini"
+        migrations = Path(dir_uri) / ".." / "alembic"
+        self.uri = f"sqlite+pysqlite:///{dir_uri}/sqlite.db"
         self.engine = create_engine(self.uri, echo=False)
 
         # Upgrade application to heads

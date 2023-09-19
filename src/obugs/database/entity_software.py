@@ -1,7 +1,8 @@
 from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from obugs.data.database.entity_base import BaseEntity
+from obugs.database.entity_base import BaseEntity
+from obugs.graphql.types.software import Software
 
 
 class SoftwareEntity(BaseEntity):
@@ -21,3 +22,11 @@ class SoftwareEntity(BaseEntity):
         self.full_name = full_name
         self.editor = editor
         self.description = description
+
+    def gql(self):
+        return Software(
+            id=self.id,
+            full_name=self.full_name,
+            editor=self.editor,
+            description=self.description
+        )

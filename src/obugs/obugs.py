@@ -6,17 +6,16 @@ from secrets import choice
 
 from flask_mail import Mail, Message
 from flask import Flask, request, jsonify
-from strawberry.flask.views import GraphQLView
 from sqlalchemy.orm import Session
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
 
-from obugs.data.graphql.my_graphql_view import MyGraphQLView
-from obugs.data.graphql.schema import schema
-from obugs.data.database.database import Database
+from obugs.graphql.graphql_view import MyGraphQLView
+from obugs.graphql.schema import schema
+from obugs.database.database import Database
 
-from obugs.data.database.entity_user import UserEntity
+from obugs.database.entity_user import UserEntity
 
 
 class Obugs:

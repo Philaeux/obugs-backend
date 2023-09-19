@@ -4,7 +4,8 @@ from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, BigInteger, Identity
 
-from obugs.data.database.entity_base import BaseEntity
+from obugs.database.entity_base import BaseEntity
+from obugs.graphql.types.entry_message import EntryMessage
 
 
 class EntryMessageEntity(BaseEntity):
@@ -24,6 +25,20 @@ class EntryMessageEntity(BaseEntity):
         "polymorphic_on": "type",
     }
 
+    def gql(self) -> EntryMessage:
+        return EntryMessage(
+            id=self.id,
+            entry_id=self.entry_id,
+            user_id=self.user_id,
+            created_at=self.created_at,
+            type=self.type,
+            comment=None,
+            state_before=None,
+            state_after=None,
+            rating=None,
+            rating_count=None
+        )
+
 
 class EntryMessageCreationEntity(EntryMessageEntity):
     state_after: Mapped[str] = mapped_column(nullable=True, use_existing_column=True)
@@ -32,6 +47,20 @@ class EntryMessageCreationEntity(EntryMessageEntity):
         "polymorphic_identity": "creation",
     }
 
+    def gql(self) -> EntryMessage:
+        return EntryMessage(
+            id=self.id,
+            entry_id=self.entry_id,
+            user_id=self.user_id,
+            created_at=self.created_at,
+            type=self.type,
+            comment=None,
+            state_before=None,
+            state_after=self.state_after,
+            rating=None,
+            rating_count=None
+        )
+
 
 class EntryMessageCommentEntity(EntryMessageEntity):
     comment: Mapped[str] = mapped_column(nullable=True)
@@ -39,6 +68,20 @@ class EntryMessageCommentEntity(EntryMessageEntity):
     __mapper_args__ = {
         "polymorphic_identity": "comment",
     }
+
+    def gql(self) -> EntryMessage:
+        return EntryMessage(
+            id=self.id,
+            entry_id=self.entry_id,
+            user_id=self.user_id,
+            created_at=self.created_at,
+            type=self.type,
+            comment=self.comment,
+            state_before=None,
+            state_after=None,
+            rating=None,
+            rating_count=None
+        )
 
 
 class EntryMessagePetitionEntity(EntryMessageEntity):
@@ -53,3 +96,17 @@ class EntryMessagePetitionEntity(EntryMessageEntity):
     __mapper_args__ = {
         "polymorphic_identity": "petition",
     }
+
+    def gql(self) -> EntryMessage:
+        return EntryMessage(
+            id=self.id,
+            entry_id=self.entry_id,
+            user_id=self.user_id,
+            created_at=self.created_at,
+            type=self.type,
+            comment=None,
+            state_before=self.state_before,
+            state_after=self.state_after,
+            rating=self.rating,
+            rating_count=self.rating_count
+        )
