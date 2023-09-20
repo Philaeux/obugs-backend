@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from flask_jwt_extended import JWTManager, create_access_token
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS
+from tornado.wsgi import WSGIContainer
+from tornado.httpserver import HTTPServer
+from tornado.ioloop import IOLoop
 
 from obugs.graphql.graphql_view import MyGraphQLView
 from obugs.graphql.schema import schema
@@ -116,4 +119,9 @@ class Obugs:
             return jsonify({'error': '', 'message': access_token}), 200
 
     def run(self):
-        self.app.run()
+        if self.app.config['DEBUG']:
+            self.app.run()
+        else:
+            http_server = HTTPServer(WSGIContainer(self.app))
+            http_server.listen(5000)
+            IOLoop.instance().start()
