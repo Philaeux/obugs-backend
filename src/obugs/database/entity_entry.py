@@ -1,5 +1,6 @@
 from datetime import datetime
 import enum
+import json
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -28,30 +29,18 @@ class EntryEntity(BaseEntity):
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column(Text())
     illustration: Mapped[str] = mapped_column(Text())
-    status: Mapped[EntryStatus] = mapped_column(default=EntryStatus.NEW)
+    status: Mapped[EntryStatus] = mapped_column()
     rating_total: Mapped[int] = mapped_column(BigInteger(), default=2)
     rating_count: Mapped[int] = mapped_column(BigInteger(), default=1)
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
-    updated_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column()
+    updated_at: Mapped[datetime] = mapped_column()
 
     software: Mapped["SoftwareEntity"] = relationship(back_populates="entries")
     tags: Mapped[List["TagEntity"]] = relationship(secondary=association_tags_entries, back_populates="entries")
     messages: Mapped[List["EntryMessageEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
     votes: Mapped[List["EntryVoteEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
 
-    def __init__(self, software_id, title, description, illustration):
-        super().__init__()
-        self.software_id = software_id
-        self.title = title
-        self.description = description
-        self.illustration = illustration
-        self.status = EntryStatus.NEW
-        self.rating_total = 2
-        self.rating_count = 1
-        self.created_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
-
-    def gql(self):
+    def gql(self) -> Entry:
         return Entry(
             id=self.id,
             software_id=self.software_id,
@@ -65,3 +54,12 @@ class EntryEntity(BaseEntity):
             rating_total=self.rating_total,
             rating_count=self.rating_count
         )
+
+    def export_snapshot(self):
+        return json.dumps({
+            'title': self.title,
+            'description': self.description,
+            'illustration': self.illustration,
+            'status': str(self.status.value),
+            'tags': [str(tag.name) for tag in self.tags]
+        })

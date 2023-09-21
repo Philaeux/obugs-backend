@@ -16,13 +16,6 @@ class SoftwareEntity(BaseEntity):
     tags: Mapped[List["TagEntity"]] = relationship(back_populates="software", cascade="all, delete-orphan")
     entries: Mapped[List["EntryEntity"]] = relationship(back_populates="software", cascade="all, delete-orphan")
 
-    def __init__(self, software_id, full_name, editor, description):
-        super().__init__()
-        self.id = software_id
-        self.full_name = full_name
-        self.editor = editor
-        self.description = description
-
     def gql(self):
         return Software(
             id=self.id,

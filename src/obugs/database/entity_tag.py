@@ -6,6 +6,7 @@ from sqlalchemy import ForeignKey, Identity
 from obugs.database.entity_base import BaseEntity, association_tags_entries
 from obugs.graphql.types.tag import Tag
 
+
 class TagEntity(BaseEntity):
     __tablename__ = "tag"
 
@@ -17,11 +18,6 @@ class TagEntity(BaseEntity):
 
     software: Mapped["SoftwareEntity"] = relationship(back_populates="tags")
     entries: Mapped[List["EntryEntity"]] = relationship(secondary=association_tags_entries, back_populates="tags")
-
-    def __init__(self, name, software_id, font_color='#000000', background_color='#e0e0e0'):
-        super().__init__()
-        self.name = name
-        self.software_id = software_id
 
     def gql(self):
         return Tag(

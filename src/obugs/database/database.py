@@ -12,7 +12,8 @@ from obugs.database.entity_user import UserEntity
 from obugs.database.entity_tag import TagEntity
 from obugs.database.entity_entry import EntryEntity, EntryStatus
 from obugs.database.entity_entry_vote import EntryVoteEntity
-from obugs.database.entity_entry_message import EntryMessageCommentEntity, EntryMessageEntity, EntryMessagePetitionEntity, EntryMessageCreationEntity
+from obugs.database.entity_entry_message import (EntryMessageCommentEntity, EntryMessageEntity,
+                                                 EntryMessagePetitionEntity, EntryMessageCreationEntity)
 from obugs.database.entity_entry_petition_vote import EntryPetitionVoteEntity
 
 
@@ -33,13 +34,16 @@ class Database:
             cls._instance = object.__new__(cls)
         return cls._instance
 
-    def __init__(self, check_migrations=False):
+    def __init__(self, uri='', check_migrations=False):
         """Defines all necessary ressources (URI & engine) and create database if necessary."""
 
         dir_uri = os.path.dirname(__file__)
         alembic = Path(dir_uri) / ".." / ".." / "alembic.ini"
         migrations = Path(dir_uri) / ".." / "alembic"
-        self.uri = f"sqlite+pysqlite:///{dir_uri}/sqlite.db"
+        if uri == '':
+            self.uri = f"sqlite+pysqlite:///{dir_uri}/sqlite.db"
+        else:
+            self.uri = uri
         self.engine = create_engine(self.uri, echo=False)
 
         # Upgrade application to heads

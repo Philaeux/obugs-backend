@@ -10,13 +10,7 @@ class EntryPetitionVoteEntity(BaseEntity):
     id: Mapped[int] = mapped_column(Identity(), primary_key=True)
     entry_petition_id: Mapped[int] = mapped_column(ForeignKey("entry_message.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    rating: Mapped[int] = mapped_column()
+    rating: Mapped[int] = mapped_column(default=1)
 
     entry_petition: Mapped["EntryMessagePetitionEntity"] = relationship(back_populates="votes")
     user: Mapped["UserEntity"] = relationship(back_populates="petition_votes")
-
-    def __init__(self, entry_message_id, user_id, rating):
-        super().__init__()
-        self.entry_message_id = entry_message_id
-        self.user_id = user_id
-        self.rating = rating

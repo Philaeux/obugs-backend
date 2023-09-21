@@ -11,7 +11,7 @@ class EntryVoteEntity(BaseEntity):
     id: Mapped[int] = mapped_column(Identity(), primary_key=True)
     entry_id: Mapped[int] = mapped_column(ForeignKey("entry.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    rating: Mapped[int] = mapped_column()
+    rating: Mapped[int] = mapped_column(default=2)
 
     entry: Mapped["EntryEntity"] = relationship(back_populates="votes")
     user: Mapped["UserEntity"] = relationship(back_populates="votes")

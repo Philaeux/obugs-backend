@@ -14,7 +14,7 @@ class EntryMessageEntity(BaseEntity):
     id: Mapped[int] = mapped_column(Identity(), primary_key=True)
     entry_id: Mapped[int] = mapped_column(ForeignKey("entry.id"))
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow())
+    created_at: Mapped[datetime] = mapped_column()
     type: Mapped[str] = mapped_column()
 
     user: Mapped["UserEntity"] = relationship(back_populates="messages")
@@ -87,8 +87,8 @@ class EntryMessageCommentEntity(EntryMessageEntity):
 class EntryMessagePetitionEntity(EntryMessageEntity):
     state_before: Mapped[str] = mapped_column(nullable=True)
     state_after: Mapped[str] = mapped_column(nullable=True, use_existing_column=True)
-    rating: Mapped[int] = mapped_column(BigInteger(), nullable=True)
-    rating_count: Mapped[int] = mapped_column(BigInteger(), nullable=True)
+    rating: Mapped[int] = mapped_column(BigInteger(), nullable=True, default=1)
+    rating_count: Mapped[int] = mapped_column(BigInteger(), nullable=True, default=1)
 
     votes: Mapped[List["EntryPetitionVoteEntity"]] = relationship(
         back_populates="entry_petition", cascade="all, delete-orphan")

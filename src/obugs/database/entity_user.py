@@ -14,7 +14,7 @@ class UserEntity(BaseEntity):
     username: Mapped[str] = mapped_column()
     password: Mapped[str] = mapped_column()
     email: Mapped[str] = mapped_column()
-    is_activated: Mapped[bool] = mapped_column()
+    is_activated: Mapped[bool] = mapped_column(default=False)
     activation_token: Mapped[str] = mapped_column(String(32))
 
     messages: Mapped[List["EntryMessageEntity"]] = relationship(back_populates="user")
@@ -22,15 +22,6 @@ class UserEntity(BaseEntity):
     petition_votes: Mapped[List["EntryPetitionVoteEntity"]] = relationship(
         back_populates="user", cascade="all, delete-orphan")
 
-    def __init__(self, username, password, email, activation_token):
-        super().__init__()
-        self.username = username
-        self.password = password
-        self.email = email
-        self.is_activated = False
-        self.activation_token = activation_token
-
-    @staticmethod
     def gql(self):
         return User(
             id=self.id,

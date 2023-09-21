@@ -27,8 +27,7 @@ class Query:
     def current_user(self) -> User | None:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
-            sql = select(UserEntity).where(UserEntity.id == current_user['id'])
-            db_user = session.scalar(sql)
+            db_user = session.query(UserEntity).where(UserEntity.id == current_user['id']).one_or_none()
             if db_user is None:
                 return None
             else:
@@ -39,12 +38,21 @@ class Query:
     def my_vote(self, entry_id: int) -> EntryVote | None:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
-            sql = select(EntryVoteEntity).where(EntryVoteEntity.user_id == current_user['id'], EntryVoteEntity.entry_id == entry_id)
-            db_vote = session.scalar(sql)
+            db_vote = session.query(EntryVoteEntity).where(EntryVoteEntity.user_id == current_user['id'],
+                                                           EntryVoteEntity.entry_id == entry_id).one_or_none()
             if db_vote is None:
                 return None
             else:
                 return db_vote.gql()
+
+    @strawberry.field
+    def user(self, user_id: int) -> User | None:
+        with Session(Database().engine) as session:
+            db_user = session.query(UserEntity).where(UserEntity.id == user_id).one_or_none()
+            if db_user is None:
+                return None
+            else:
+                return db_user.gql()
 
     @strawberry.field
     def softwares(self) -> list[Software]:
@@ -56,8 +64,7 @@ class Query:
     @strawberry.field
     def software(self, software_id: str) -> Software | None:
         with Session(Database().engine) as session:
-            sql = select(SoftwareEntity).where(SoftwareEntity.id == software_id)
-            db_software = session.scalar(sql)
+            db_software = session.query(SoftwareEntity).where(SoftwareEntity.id == software_id).one_or_none()
             if db_software is None:
                 return None
             else:
@@ -73,23 +80,29 @@ class Query:
     @strawberry.field
     def entry(self, entry_id: int) -> Entry | None:
         with Session(Database().engine) as session:
-            sql = select(EntryEntity).where(EntryEntity.id == entry_id)
-            db_entry = session.scalar(sql)
+            db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
                 return None
             else:
                 return db_entry.gql()
 
     @strawberry.field
-    def entry_messages(self, entry_id: int) -> list[EntryMessage]:
+    def entry_messages(self, entry_id: int, limit: int = 20) -> list[EntryMessage]:
         with Session(Database().engine) as session:
-            sql = select(EntryMessageEntity).where(EntryMessageEntity.entry_id == entry_id)
+            sql = select(EntryMessageEntity)\
+                .where(EntryMessageEntity.entry_id == entry_id)\
+                .order_by(EntryMessageEntity.created_at)\
+                .limit(limit)
             db_messages = session.execute(sql).scalars().all()
             return [message.gql() for message in db_messages]
 
     @strawberry.field
     def entries(self, software_id: str, limit: int = 20) -> list[Entry]:
-        with Session(Database().engine) as session:
-            sql = select(EntryEntity).where(EntryEntity.software_id == software_id).order_by(EntryEntity.updated_at.desc()).limit(limit)
+        with (Session(Database().engine) as session):
+            sql = select(EntryEntity)\
+                .where(EntryEntity.software_id == software_id)\
+                .order_by(EntryEntity.updated_at.desc())\
+                .limit(limit)
+
             db_entries = session.execute(sql).scalars().all()
             return [entry.gql() for entry in db_entries]

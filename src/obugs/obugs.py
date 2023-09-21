@@ -24,14 +24,12 @@ from obugs.database.entity_user import UserEntity
 class Obugs:
 
     def __init__(self):
-        self.database = Database(check_migrations=True)
 
         self.app = Flask(__name__)
         CORS(self.app)
         self.config = configparser.ConfigParser()
         self.config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")
         self.app.config['DEBUG'] = self.config['Flask'].getboolean('DEBUG')
-        self.app.config["SQLALCHEMY_DATABASE_URI"] = self.database.uri
         self.app.config["JWT_SECRET_KEY"] = self.config['Flask']['JWT_SECRET_KEY']
         self.app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 1296000
         self.app.config['MAIL_SERVER'] = self.config['Flask']['MAIL_SERVER']
@@ -41,6 +39,8 @@ class Obugs:
         self.app.config['MAIL_USERNAME'] = self.config['Flask']['MAIL_USERNAME']
         self.app.config['MAIL_PASSWORD'] = self.config['Flask']['MAIL_PASSWORD']
         self.app.config['MAIL_DEFAULT_SENDER'] = self.config['Flask']['MAIL_DEFAULT_SENDER']
+        self.database = Database(uri=self.config['Flask']['DATABASE'], check_migrations=True)
+        self.app.config["SQLALCHEMY_DATABASE_URI"] = self.database.uri
         self.mail = Mail(self.app)
         self.jwt = JWTManager(self.app)
 
