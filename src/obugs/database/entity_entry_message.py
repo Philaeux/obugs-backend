@@ -1,8 +1,8 @@
 from datetime import datetime
-from typing import List
+import uuid
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, BigInteger, Identity
+from sqlalchemy import ForeignKey, BigInteger
 
 from obugs.database.entity_base import BaseEntity
 from obugs.graphql.types.entry_message import EntryMessage
@@ -11,14 +11,14 @@ from obugs.graphql.types.entry_message import EntryMessage
 class EntryMessageEntity(BaseEntity):
     __tablename__ = "entry_message"
 
-    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
-    entry_id: Mapped[int] = mapped_column(ForeignKey("entry.id"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    entry_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("entry.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
     created_at: Mapped[datetime] = mapped_column()
     type: Mapped[str] = mapped_column()
 
-    user: Mapped["UserEntity"] = relationship(back_populates="messages")
     entry: Mapped["EntryEntity"] = relationship(back_populates="messages")
+    user: Mapped["UserEntity"] = relationship(foreign_keys=[user_id])
 
     __mapper_args__ = {
         "polymorphic_identity": "entry_message",
@@ -35,8 +35,12 @@ class EntryMessageEntity(BaseEntity):
             comment=None,
             state_before=None,
             state_after=None,
-            rating=None,
-            rating_count=None
+            rating_total=None,
+            rating_count=None,
+            is_closed=None,
+            closed_by_id=None,
+            closed_at=None,
+            accepted=None
         )
 
 
@@ -57,8 +61,12 @@ class EntryMessageCreationEntity(EntryMessageEntity):
             comment=None,
             state_before=None,
             state_after=self.state_after,
-            rating=None,
-            rating_count=None
+            rating_total=None,
+            rating_count=None,
+            is_closed=None,
+            closed_by_id=None,
+            closed_at=None,
+            accepted=None
         )
 
 
@@ -79,22 +87,29 @@ class EntryMessageCommentEntity(EntryMessageEntity):
             comment=self.comment,
             state_before=None,
             state_after=None,
-            rating=None,
-            rating_count=None
+            rating_total=None,
+            rating_count=None,
+            is_closed=None,
+            closed_by_id=None,
+            closed_at=None,
+            accepted=None
         )
 
 
-class EntryMessagePetitionEntity(EntryMessageEntity):
+class EntryMessagePatchEntity(EntryMessageEntity):
     state_before: Mapped[str] = mapped_column(nullable=True)
     state_after: Mapped[str] = mapped_column(nullable=True, use_existing_column=True)
-    rating: Mapped[int] = mapped_column(BigInteger(), nullable=True, default=1)
+    rating_total: Mapped[int] = mapped_column(BigInteger(), nullable=True, default=1)
     rating_count: Mapped[int] = mapped_column(BigInteger(), nullable=True, default=1)
+    is_closed: Mapped[bool] = mapped_column(nullable=True)
+    closed_by_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=True)
+    closed_at: Mapped[datetime] = mapped_column(nullable=True)
+    accepted: Mapped[bool] = mapped_column(nullable=True)
 
-    votes: Mapped[List["EntryPetitionVoteEntity"]] = relationship(
-        back_populates="entry_petition", cascade="all, delete-orphan")
+    closed_by: Mapped["UserEntity"] = relationship(foreign_keys=[closed_by_id])
 
     __mapper_args__ = {
-        "polymorphic_identity": "petition",
+        "polymorphic_identity": "patch",
     }
 
     def gql(self) -> EntryMessage:
@@ -107,6 +122,10 @@ class EntryMessagePetitionEntity(EntryMessageEntity):
             comment=None,
             state_before=self.state_before,
             state_after=self.state_after,
-            rating=self.rating,
-            rating_count=self.rating_count
+            rating_total=self.rating_total,
+            rating_count=self.rating_count,
+            is_closed=self.is_closed,
+            closed_by_id=self.closed_by_id,
+            closed_at=self.closed_at,
+            accepted=self.accepted
         )

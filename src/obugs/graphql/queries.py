@@ -2,11 +2,13 @@ import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+import uuid
+from uuid import UUID
 
 from obugs.database.database import Database
 from obugs.database.entity_entry import EntryEntity
 from obugs.database.entity_entry_message import EntryMessageEntity
-from obugs.database.entity_entry_vote import EntryVoteEntity
+from obugs.database.entity_vote import VoteEntity
 from obugs.database.entity_software import SoftwareEntity
 from obugs.database.entity_tag import TagEntity
 from obugs.database.entity_user import UserEntity
@@ -15,7 +17,7 @@ from obugs.graphql.types.entry_message import EntryMessage
 from obugs.graphql.types.software import Software
 from obugs.graphql.types.tag import Tag
 from obugs.graphql.types.user import User
-from obugs.graphql.types.entry_vote import EntryVote
+from obugs.graphql.types.vote import Vote
 
 
 # noinspection PyArgumentList
@@ -27,7 +29,7 @@ class Query:
     def current_user(self) -> User | None:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
-            db_user = session.query(UserEntity).where(UserEntity.id == current_user['id']).one_or_none()
+            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None:
                 return None
             else:
@@ -35,31 +37,24 @@ class Query:
 
     @strawberry.field
     @jwt_required()
-    def my_vote(self, entry_id: int) -> EntryVote | None:
+    def my_vote(self, subject_id: uuid.UUID) -> Vote | None:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
-            db_vote = session.query(EntryVoteEntity).where(EntryVoteEntity.user_id == current_user['id'],
-                                                           EntryVoteEntity.entry_id == entry_id).one_or_none()
+            db_vote = session.query(VoteEntity).where(VoteEntity.user_id == UUID(current_user['id']),
+                                                      VoteEntity.subject_id == subject_id).one_or_none()
             if db_vote is None:
                 return None
             else:
                 return db_vote.gql()
 
     @strawberry.field
-    def user(self, user_id: int) -> User | None:
+    def user(self, user_id: uuid.UUID) -> User | None:
         with Session(Database().engine) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == user_id).one_or_none()
             if db_user is None:
                 return None
             else:
                 return db_user.gql()
-
-    @strawberry.field
-    def softwares(self) -> list[Software]:
-        with Session(Database().engine) as session:
-            sql = select(SoftwareEntity).order_by(SoftwareEntity.full_name)
-            db_software = session.execute(sql).scalars().all()
-            return [software.gql() for software in db_software]
 
     @strawberry.field
     def software(self, software_id: str) -> Software | None:
@@ -71,6 +66,13 @@ class Query:
                 return db_software.gql()
 
     @strawberry.field
+    def softwares(self) -> list[Software]:
+        with Session(Database().engine) as session:
+            sql = select(SoftwareEntity).order_by(SoftwareEntity.full_name)
+            db_software = session.execute(sql).scalars().all()
+            return [software.gql() for software in db_software]
+
+    @strawberry.field
     def tags(self, software_id: str) -> list[Tag]:
         with Session(Database().engine) as session:
             sql = select(TagEntity).where(TagEntity.software_id == software_id).order_by(TagEntity.name)
@@ -78,7 +80,7 @@ class Query:
             return [tag.gql() for tag in db_tag]
 
     @strawberry.field
-    def entry(self, entry_id: int) -> Entry | None:
+    def entry(self, entry_id: uuid.UUID) -> Entry | None:
         with Session(Database().engine) as session:
             db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
@@ -87,7 +89,18 @@ class Query:
                 return db_entry.gql()
 
     @strawberry.field
-    def entry_messages(self, entry_id: int, limit: int = 20) -> list[EntryMessage]:
+    def entries(self, software_id: str, limit: int = 20) -> list[Entry]:
+        with (Session(Database().engine) as session):
+            sql = select(EntryEntity) \
+                .where(EntryEntity.software_id == software_id) \
+                .order_by(EntryEntity.updated_at.desc()) \
+                .limit(limit)
+
+            db_entries = session.execute(sql).scalars().all()
+            return [entry.gql() for entry in db_entries]
+
+    @strawberry.field
+    def entry_messages(self, entry_id: uuid.UUID, limit: int = 20) -> list[EntryMessage]:
         with Session(Database().engine) as session:
             sql = select(EntryMessageEntity)\
                 .where(EntryMessageEntity.entry_id == entry_id)\
@@ -95,14 +108,3 @@ class Query:
                 .limit(limit)
             db_messages = session.execute(sql).scalars().all()
             return [message.gql() for message in db_messages]
-
-    @strawberry.field
-    def entries(self, software_id: str, limit: int = 20) -> list[Entry]:
-        with (Session(Database().engine) as session):
-            sql = select(EntryEntity)\
-                .where(EntryEntity.software_id == software_id)\
-                .order_by(EntryEntity.updated_at.desc())\
-                .limit(limit)
-
-            db_entries = session.execute(sql).scalars().all()
-            return [entry.gql() for entry in db_entries]

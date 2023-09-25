@@ -1,9 +1,10 @@
 import strawberry
+import uuid
 
 
 @strawberry.type
 class Tag:
-    id: int
+    id: uuid.UUID
     name: str
     software_id: str
     font_color: str

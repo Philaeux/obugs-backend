@@ -1,10 +1,10 @@
 from datetime import datetime
 import enum
-import json
+import uuid
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, BigInteger, Text, Identity
+from sqlalchemy import ForeignKey, BigInteger, Text
 
 from obugs.database.entity_base import BaseEntity, association_tags_entries
 from obugs.graphql.types.entry import Entry
@@ -24,7 +24,7 @@ class EntryStatus (enum.Enum):
 class EntryEntity(BaseEntity):
     __tablename__ = "entry"
 
-    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     software_id: Mapped[str] = mapped_column(ForeignKey("software.id"))
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column(Text())
@@ -38,7 +38,6 @@ class EntryEntity(BaseEntity):
     software: Mapped["SoftwareEntity"] = relationship(back_populates="entries")
     tags: Mapped[List["TagEntity"]] = relationship(secondary=association_tags_entries, back_populates="entries")
     messages: Mapped[List["EntryMessageEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
-    votes: Mapped[List["EntryVoteEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
 
     def gql(self) -> Entry:
         return Entry(
@@ -54,12 +53,3 @@ class EntryEntity(BaseEntity):
             rating_total=self.rating_total,
             rating_count=self.rating_count
         )
-
-    def export_snapshot(self):
-        return json.dumps({
-            'title': self.title,
-            'description': self.description,
-            'illustration': self.illustration,
-            'status': str(self.status.value),
-            'tags': [str(tag.name) for tag in self.tags]
-        })

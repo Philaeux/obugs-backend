@@ -11,10 +11,9 @@ from obugs.database.entity_software import SoftwareEntity
 from obugs.database.entity_user import UserEntity
 from obugs.database.entity_tag import TagEntity
 from obugs.database.entity_entry import EntryEntity, EntryStatus
-from obugs.database.entity_entry_vote import EntryVoteEntity
+from obugs.database.entity_vote import VoteEntity
 from obugs.database.entity_entry_message import (EntryMessageCommentEntity, EntryMessageEntity,
-                                                 EntryMessagePetitionEntity, EntryMessageCreationEntity)
-from obugs.database.entity_entry_petition_vote import EntryPetitionVoteEntity
+                                                 EntryMessagePatchEntity, EntryMessageCreationEntity)
 
 
 class Database:

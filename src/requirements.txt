@@ -5,3 +5,5 @@ flask-jwt-extended
 Flask
 Tornado
 Werkzeug
+psycopg2
+requests

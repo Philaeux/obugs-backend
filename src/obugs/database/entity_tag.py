@@ -1,7 +1,8 @@
+import uuid
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, Identity
+from sqlalchemy import ForeignKey
 
 from obugs.database.entity_base import BaseEntity, association_tags_entries
 from obugs.graphql.types.tag import Tag
@@ -10,7 +11,7 @@ from obugs.graphql.types.tag import Tag
 class TagEntity(BaseEntity):
     __tablename__ = "tag"
 
-    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column()
     software_id: Mapped[str] = mapped_column(ForeignKey("software.id"))
     font_color: Mapped[str] = mapped_column(default='#000000')

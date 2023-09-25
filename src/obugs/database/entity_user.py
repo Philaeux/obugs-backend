@@ -1,6 +1,7 @@
 from typing import List
+import uuid
 
-from sqlalchemy import String, Identity
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from obugs.database.entity_base import BaseEntity
@@ -10,20 +11,21 @@ from obugs.graphql.types.user import User
 class UserEntity(BaseEntity):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(Identity(), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     username: Mapped[str] = mapped_column()
     password: Mapped[str] = mapped_column()
     email: Mapped[str] = mapped_column()
-    is_activated: Mapped[bool] = mapped_column(default=False)
+    is_activated: Mapped[bool] = mapped_column()
     activation_token: Mapped[str] = mapped_column(String(32))
+    is_admin: Mapped[bool] = mapped_column()
+    is_banned: Mapped[bool] = mapped_column()
 
-    messages: Mapped[List["EntryMessageEntity"]] = relationship(back_populates="user")
-    votes: Mapped[List["EntryVoteEntity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-    petition_votes: Mapped[List["EntryPetitionVoteEntity"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan")
+    votes: Mapped[List["VoteEntity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
     def gql(self):
         return User(
             id=self.id,
-            username=self.username
+            username=self.username,
+            is_admin=self.is_admin,
+            is_banned=self.is_banned
         )

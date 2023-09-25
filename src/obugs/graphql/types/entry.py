@@ -1,12 +1,13 @@
 import datetime
 import strawberry
+import uuid
 
 from obugs.graphql.types.tag import Tag
 
 
 @strawberry.type
 class Entry:
-    id: int
+    id: uuid.UUID
     software_id: str
     title: str
     tags: list[Tag]

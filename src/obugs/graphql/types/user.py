@@ -1,8 +1,10 @@
 import strawberry
+import uuid
 
 
 @strawberry.type
 class User:
-    id: int
+    id: uuid.UUID
     username: str
-
+    is_admin: bool
+    is_banned: bool
