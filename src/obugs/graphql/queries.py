@@ -1,12 +1,12 @@
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.orm import Session
 import uuid
 from uuid import UUID
 
 from obugs.database.database import Database
-from obugs.database.entity_entry import EntryEntity
+from obugs.database.entity_entry import EntryEntity, EntryStatus
 from obugs.database.entity_entry_message import EntryMessageEntity
 from obugs.database.entity_vote import VoteEntity
 from obugs.database.entity_software import SoftwareEntity
@@ -18,6 +18,7 @@ from obugs.graphql.types.software import Software
 from obugs.graphql.types.tag import Tag
 from obugs.graphql.types.user import User
 from obugs.graphql.types.vote import Vote
+from obugs.graphql.types.error import Error
 
 
 # noinspection PyArgumentList
@@ -26,14 +27,15 @@ class Query:
 
     @strawberry.field
     @jwt_required()
-    def current_user(self) -> User | None:
+    def current_user(self) -> Error | User:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None:
-                return None
-            else:
-                return db_user.gql()
+                return Error(message="No user found with specified id.")
+            if db_user.is_banned:
+                return Error(message="User is banned.")
+            return db_user.gql()
 
     @strawberry.field
     @jwt_required()
@@ -89,22 +91,26 @@ class Query:
                 return db_entry.gql()
 
     @strawberry.field
-    def entries(self, software_id: str, limit: int = 20) -> list[Entry]:
+    def entries(self, software_id: str, status_filter: list[str] = ['CONFIRMED', 'WIP', 'CHECK'], limit: int = 20, offset: int = 0) -> list[Entry]:
+        enum_filter = [EntryStatus[s] for s in status_filter if s in EntryStatus.__members__]
+        if len(enum_filter) == 0:
+            return []
+
         with (Session(Database().engine) as session):
             sql = select(EntryEntity) \
-                .where(EntryEntity.software_id == software_id) \
-                .order_by(EntryEntity.updated_at.desc()) \
+                .where(and_(EntryEntity.software_id == software_id, EntryEntity.status.in_(enum_filter))) \
+                .order_by(EntryEntity.updated_at.desc()).offset(offset) \
                 .limit(limit)
 
             db_entries = session.execute(sql).scalars().all()
             return [entry.gql() for entry in db_entries]
 
     @strawberry.field
-    def entry_messages(self, entry_id: uuid.UUID, limit: int = 20) -> list[EntryMessage]:
+    def entry_messages(self, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) -> list[EntryMessage]:
         with Session(Database().engine) as session:
             sql = select(EntryMessageEntity)\
                 .where(EntryMessageEntity.entry_id == entry_id)\
-                .order_by(EntryMessageEntity.created_at)\
+                .order_by(EntryMessageEntity.created_at).offset(offset) \
                 .limit(limit)
             db_messages = session.execute(sql).scalars().all()
             return [message.gql() for message in db_messages]

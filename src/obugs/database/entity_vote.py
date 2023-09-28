@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Index
 
 from obugs.database.entity_base import BaseEntity
 from obugs.graphql.types.vote import Vote
@@ -16,6 +16,10 @@ class VoteEntity(BaseEntity):
     rating: Mapped[int] = mapped_column()
 
     user: Mapped["UserEntity"] = relationship(back_populates="votes")
+
+    __table_args__ = (
+        Index('idx_vote_user_subject', user_id, subject_id),
+    )
 
     def gql(self):
         return Vote(

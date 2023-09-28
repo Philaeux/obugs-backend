@@ -6,34 +6,29 @@ from uuid import UUID
 import requests
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from obugs.database.database import Database
 from obugs.database.entity_entry import EntryEntity, EntryStatus
 from obugs.database.entity_entry_message import EntryMessageCreationEntity, EntryMessageCommentEntity, \
-    EntryMessageEntity, EntryMessagePatchEntity
+    EntryMessagePatchEntity
 from obugs.database.entity_tag import TagEntity
 from obugs.database.entity_user import UserEntity
 from obugs.database.entity_vote import VoteEntity
 from obugs.graphql.types.entry import Entry
 from obugs.graphql.types.entry_message import EntryMessage
-from obugs.graphql.types.vote_update import VoteUpdate
+from obugs.graphql.types.composites import VoteUpdate, ProcessPatchSuccess
+from obugs.graphql.types.error import Error
+from obugs.graphql.types.user import User
 
 
 @strawberry.type
-class ProcessPatchSuccess:
-    entry: Entry
-    message: EntryMessage
-
-
-@strawberry.type
-class Mutation:
+class MutationAll:
 
     @strawberry.mutation
     @jwt_required()
     def create_entry(self, info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
-                     illustration: str) -> Entry | None:
+                     illustration: str) -> Error | Entry:
         current_user = get_jwt_identity()
 
         try:
@@ -43,11 +38,15 @@ class Mutation:
             })
             result = response.json()
             if not result['success']:
-                return None
+                return Error(message='Invalid recaptcha.')
         except Exception:
-            return None
+            return Error(message='Problem while checking recaptcha.')
 
         with Session(Database().engine) as session:
+            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            if db_user is None or db_user.is_banned:
+                return Error(message="Banned user.")
+
             entry = EntryEntity(id=uuid.uuid4(), software_id=software_id, title=title, status=EntryStatus.NEW,
                                 description=description, illustration=illustration,
                                 created_at=datetime.datetime.utcnow(),
@@ -57,7 +56,7 @@ class Mutation:
                                                             TagEntity.name == tag).one_or_none()
                 if tag_entity is not None:
                     entry.tags.append(tag_entity)
-            vote = VoteEntity(user_id=UUID(current_user['id']), subject_id=entry.id, rating=2)
+            vote = VoteEntity(user_id=db_user.id, subject_id=entry.id, rating=2)
             state_after = json.dumps({
                 'title': entry.title,
                 'description': entry.description,
@@ -65,7 +64,7 @@ class Mutation:
                 'status': str(entry.status.value),
                 'tags': [str(tag.name) for tag in entry.tags]
             })
-            message = EntryMessageCreationEntity(entry=entry, user_id=UUID(current_user['id']),
+            message = EntryMessageCreationEntity(entry=entry, user_id=db_user.id,
                                                  created_at=datetime.datetime.utcnow(), state_after=state_after)
             session.add(entry)
             session.add(vote)
@@ -75,20 +74,24 @@ class Mutation:
 
     @strawberry.mutation
     @jwt_required()
-    def vote(self, subject_id: uuid.UUID, rating: int) -> VoteUpdate | None:
+    def vote(self, subject_id: uuid.UUID, rating: int) -> Error | VoteUpdate:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
+            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            if db_user is None or db_user.is_banned:
+                return Error(message="Banned user.")
+
             db_entry = session.query(EntryEntity).where(EntryEntity.id == subject_id).one_or_none()
-            db_petition = session.query(EntryMessagePatchEntity).where(
+            db_patch = session.query(EntryMessagePatchEntity).where(
                 EntryMessagePatchEntity.id == subject_id).one_or_none()
 
             if db_entry is not None:
                 if rating not in [1, 2, 3, 4, 5]:
-                    return None
-                db_vote = session.query(VoteEntity).where(VoteEntity.user_id == UUID(current_user['id']),
+                    return Error(message="Invalid vote value.")
+                db_vote = session.query(VoteEntity).where(VoteEntity.user_id == db_user.id,
                                                           VoteEntity.subject_id == subject_id).one_or_none()
                 if db_vote is None:
-                    db_vote = VoteEntity(user_id=UUID(current_user['id']), subject_id=subject_id, rating=rating)
+                    db_vote = VoteEntity(user_id=db_user.id, subject_id=subject_id, rating=rating)
                     session.add(db_vote)
                     db_entry.rating_count = db_entry.rating_count + 1
                 else:
@@ -97,54 +100,79 @@ class Mutation:
                 db_vote.rating = rating
                 session.commit()
                 return VoteUpdate(rating_count=db_entry.rating_count, rating_total=db_entry.rating_total)
-            elif db_petition is not None:
+            elif db_patch is not None:
                 if rating not in [-1, 1]:
-                    return None
-                db_vote = session.query(VoteEntity).where(VoteEntity.user_id == UUID(current_user['id']),
+                    return Error(message="Invalid vote value.")
+                db_vote = session.query(VoteEntity).where(VoteEntity.user_id == db_user.id,
                                                           VoteEntity.subject_id == subject_id).one_or_none()
                 if db_vote is None:
-                    db_vote = VoteEntity(user_id=UUID(current_user['id']), subject_id=subject_id, rating=rating)
+                    db_vote = VoteEntity(user_id=db_user.id, subject_id=subject_id, rating=rating)
                     session.add(db_vote)
-                    db_petition.rating_count = db_petition.rating_count + 1
+                    db_patch.rating_count = db_patch.rating_count + 1
                 else:
-                    db_petition.rating_total = db_petition.rating_total - db_vote.rating
-                db_petition.rating_total = db_petition.rating_total + rating
+                    db_patch.rating_total = db_patch.rating_total - db_vote.rating
+                db_patch.rating_total = db_patch.rating_total + rating
                 db_vote.rating = rating
                 session.commit()
-                return VoteUpdate(rating_count=db_petition.rating_count, rating_total=db_petition.rating_total)
-            return None
+                return VoteUpdate(rating_count=db_patch.rating_count, rating_total=db_patch.rating_total)
+            return Error(message="No subject found to vote on.")
 
     @strawberry.mutation
     @jwt_required()
-    def comment_entry(self, entry_id: uuid.UUID, comment: str) -> list[EntryMessage]:
+    def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID, comment: str) -> Error | EntryMessage:
         current_user = get_jwt_identity()
+
+        try:
+            response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
+                'secret': info.context['config']['Flask']['RECAPTCHA'],
+                'response': recaptcha
+            })
+            result = response.json()
+            if not result['success']:
+                return Error(message='Invalid recaptcha.')
+        except Exception:
+            return Error(message='Problem while checking recaptcha.')
+
         with Session(Database().engine) as session:
             db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
-                return []
+                return Error(message="Entry doesn't exist anymore.")
+            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            if db_user is None or db_user.is_banned:
+                return Error(message="Banned user.")
 
-            message = EntryMessageCommentEntity(entry=db_entry, user_id=UUID(current_user['id']),
+            message = EntryMessageCommentEntity(entry=db_entry, user_id=db_user.id,
                                                 created_at=datetime.datetime.utcnow(),
                                                 comment=comment)
             session.add(message)
-            db_entry.updated_at = datetime.datetime.utcnow()
             session.commit()
-            sql = select(EntryMessageEntity) \
-                .where(EntryMessageEntity.entry_id == entry_id) \
-                .order_by(EntryMessageEntity.created_at) \
-                .limit(20)
-            db_messages = session.execute(sql).scalars().all()
-            return [message.gql() for message in db_messages]
+            db_entry.updated_at = datetime.datetime.utcnow()
+            return message.gql()
 
     @strawberry.mutation
     @jwt_required()
-    def submit_proposition(self, entry_id: uuid.UUID, title: str, status: str, tags: list[str], description: str,
-                           illustration: str) -> list[EntryMessage]:
+    def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
+                     description: str, illustration: str) -> Error | EntryMessage:
         current_user = get_jwt_identity()
+
+        try:
+            response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
+                'secret': info.context['config']['Flask']['RECAPTCHA'],
+                'response': recaptcha
+            })
+            result = response.json()
+            if not result['success']:
+                return Error(message='Invalid recaptcha.')
+        except Exception:
+            return Error(message='Problem while checking recaptcha.')
+
         with Session(Database().engine) as session:
             db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
-                return []
+                return Error(message="Entry doesn't exist anymore.")
+            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            if db_user is None or db_user.is_banned:
+                return Error(message="Banned user.")
 
             state_before = {}
             state_after = {}
@@ -176,12 +204,12 @@ class Mutation:
                 is_modified = True
 
             if not is_modified:
-                return []
+                return Error(message="Patch contains no change.")
 
-            proposition = EntryMessagePatchEntity(
+            patch = EntryMessagePatchEntity(
                 id=uuid.uuid4(),
                 entry=db_entry,
-                user_id=UUID(current_user['id']),
+                user_id=db_user.id,
                 created_at=datetime.datetime.utcnow(),
                 state_before=json.dumps(state_before),
                 state_after=json.dumps(state_after),
@@ -190,35 +218,32 @@ class Mutation:
                 is_closed=False
             )
             vote = VoteEntity(
-                subject_id=proposition.id,
-                user_id=UUID(current_user['id']),
+                subject_id=patch.id,
+                user_id=db_user.id,
                 rating=1
             )
             db_entry.updated_at = datetime.datetime.utcnow()
-            session.add(proposition)
+            session.add(patch)
             session.add(vote)
             session.commit()
 
-            sql = select(EntryMessageEntity) \
-                .where(EntryMessageEntity.entry_id == entry_id) \
-                .order_by(EntryMessageEntity.created_at) \
-                .limit(20)
-            db_messages = session.execute(sql).scalars().all()
-            return [message.gql() for message in db_messages]
+            return patch.gql()
 
     @strawberry.mutation
     @jwt_required()
-    def process_patch(self, message_id: uuid.UUID, accept: bool) -> ProcessPatchSuccess | None:
+    def process_patch(self, message_id: uuid.UUID, accept: bool) -> Error | ProcessPatchSuccess:
         current_user = get_jwt_identity()
         with Session(Database().engine) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or not db_user.is_admin:
-                return None
+                return Error(message="User is not admin.")
+            if db_user is None or db_user.is_banned:
+                return Error(message="Banned user.")
 
             db_message = session.query(EntryMessagePatchEntity).where(
                 EntryMessagePatchEntity.id == message_id).one_or_none()
             if db_message is None or db_message.type != 'patch' or db_message.is_closed:
-                return None
+                return Error(message="Invalid patch to process.")
 
             db_message.is_closed = True
             db_message.accepted = accept
@@ -252,4 +277,23 @@ class Mutation:
                             db_message.entry.tags.append(db_tag)
             session.commit()
 
-            return ProcessPatchSuccess(message=db_message.gql(), entry=db_message.entry.gql())
+            return ProcessPatchSuccess(entry_message=db_message.gql(), entry=db_message.entry.gql())
+
+    @strawberry.mutation
+    @jwt_required()
+    def ban_user(self, user_id: uuid.UUID, ban: bool) -> Error | User:
+        current_user = get_jwt_identity()
+        with Session(Database().engine) as session:
+            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            if db_user is None or not db_user.is_admin:
+                return Error(message="User is not admin.")
+            if db_user.is_banned:
+                return Error(message="Banned user.")
+
+            to_ban = session.query(UserEntity).where(UserEntity.id == user_id).one_or_none()
+            if to_ban is None:
+                return Error(message="Target user does not exist.")
+
+            to_ban.is_banned = ban
+            session.commit()
+            return to_ban.gql()

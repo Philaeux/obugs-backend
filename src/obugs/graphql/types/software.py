@@ -7,3 +7,4 @@ class Software:
     full_name: str
     editor: str
     description: str
+    language: str

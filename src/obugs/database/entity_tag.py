@@ -13,7 +13,7 @@ class TagEntity(BaseEntity):
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column()
-    software_id: Mapped[str] = mapped_column(ForeignKey("software.id"))
+    software_id: Mapped[str] = mapped_column(ForeignKey("software.id"), index=True)
     font_color: Mapped[str] = mapped_column(default='#000000')
     background_color: Mapped[str] = mapped_column(default='#e0e0e0')
 

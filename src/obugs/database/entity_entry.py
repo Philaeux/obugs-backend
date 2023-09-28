@@ -4,7 +4,7 @@ import uuid
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, BigInteger, Text
+from sqlalchemy import ForeignKey, BigInteger, Text, Index
 
 from obugs.database.entity_base import BaseEntity, association_tags_entries
 from obugs.graphql.types.entry import Entry
@@ -24,7 +24,7 @@ class EntryStatus (enum.Enum):
 class EntryEntity(BaseEntity):
     __tablename__ = "entry"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4, index=True)
     software_id: Mapped[str] = mapped_column(ForeignKey("software.id"))
     title: Mapped[str] = mapped_column()
     description: Mapped[str] = mapped_column(Text())
@@ -38,6 +38,10 @@ class EntryEntity(BaseEntity):
     software: Mapped["SoftwareEntity"] = relationship(back_populates="entries")
     tags: Mapped[List["TagEntity"]] = relationship(secondary=association_tags_entries, back_populates="entries")
     messages: Mapped[List["EntryMessageEntity"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index('idx_entry_software_and_update_at', software_id, updated_at.desc()),
+    )
 
     def gql(self) -> Entry:
         return Entry(

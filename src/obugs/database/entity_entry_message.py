@@ -2,7 +2,7 @@ from datetime import datetime
 import uuid
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, BigInteger
+from sqlalchemy import ForeignKey, BigInteger, Index
 
 from obugs.database.entity_base import BaseEntity
 from obugs.graphql.types.entry_message import EntryMessage
@@ -11,7 +11,7 @@ from obugs.graphql.types.entry_message import EntryMessage
 class EntryMessageEntity(BaseEntity):
     __tablename__ = "entry_message"
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4, index=True)
     entry_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("entry.id"))
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"))
     created_at: Mapped[datetime] = mapped_column()
@@ -19,6 +19,10 @@ class EntryMessageEntity(BaseEntity):
 
     entry: Mapped["EntryEntity"] = relationship(back_populates="messages")
     user: Mapped["UserEntity"] = relationship(foreign_keys=[user_id])
+
+    __table_args__ = (
+        Index('idx_entry_message_entry_created_at', entry_id, created_at),
+    )
 
     __mapper_args__ = {
         "polymorphic_identity": "entry_message",
