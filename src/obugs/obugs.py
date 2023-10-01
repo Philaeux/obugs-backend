@@ -1,3 +1,4 @@
+from datetime import timedelta
 import configparser
 import os
 import requests
@@ -138,7 +139,7 @@ class Obugs:
                 if user.is_banned:
                     return jsonify({'error': 'This user is banned.', 'message': ''}), 200
 
-                access_token = create_access_token(identity={"id": user.id})
+                access_token = create_access_token(identity={"id": user.id}, expires_delta=timedelta(days=60))
             return jsonify({'error': '', 'message': access_token}), 200
 
     def run(self):

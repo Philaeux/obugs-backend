@@ -133,6 +133,9 @@ class MutationAll:
         except Exception:
             return Error(message='Problem while checking recaptcha.')
 
+        if comment == '':
+            return Error(message="Empty comment")
+
         with Session(Database().engine) as session:
             db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
