@@ -8,7 +8,7 @@ from obugs.database.database import Database
 from obugs.database.entity_user import UserEntity
 from obugs.database.entity_software import SoftwareEntity
 from obugs.graphql.types.software import Software
-from obugs.graphql.types.error import Error
+from obugs.graphql.types.obugs_error import OBugsError
 
 
 @strawberry.type
@@ -16,13 +16,13 @@ class MutationSoftware:
 
     @strawberry.mutation
     @jwt_required()
-    def upsert_software(self, id: str, full_name: str, editor: str, description: str, language: str) -> Error | Software:
+    def upsert_software(self, id: str, full_name: str, editor: str, description: str, language: str) -> OBugsError | Software:
         current_user = get_jwt_identity()
 
         with Session(Database().engine) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned or not db_user.is_admin:
-                return Error(message="Mutation not allowed for this user.")
+                return OBugsError(message="Mutation not allowed for this user.")
 
             db_software = session.query(SoftwareEntity).where(SoftwareEntity.id == id).one_or_none()
             if db_software is None:

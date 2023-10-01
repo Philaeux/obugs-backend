@@ -18,3 +18,4 @@ class Entry:
     status: str
     rating_total: int
     rating_count: int
+    open_patches_count: int

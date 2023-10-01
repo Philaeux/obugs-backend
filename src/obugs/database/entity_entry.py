@@ -34,6 +34,7 @@ class EntryEntity(BaseEntity):
     rating_count: Mapped[int] = mapped_column(BigInteger(), default=1)
     created_at: Mapped[datetime] = mapped_column()
     updated_at: Mapped[datetime] = mapped_column()
+    open_patches_count: Mapped[int] = mapped_column(default=0)
 
     software: Mapped["SoftwareEntity"] = relationship(back_populates="entries")
     tags: Mapped[List["TagEntity"]] = relationship(secondary=association_tags_entries, back_populates="entries")
@@ -55,5 +56,6 @@ class EntryEntity(BaseEntity):
             updated_at=self.updated_at,
             status=self.status.name,
             rating_total=self.rating_total,
-            rating_count=self.rating_count
+            rating_count=self.rating_count,
+            open_patches_count=self.open_patches_count
         )

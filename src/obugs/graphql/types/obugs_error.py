@@ -2,5 +2,5 @@ import strawberry
 
 
 @strawberry.type
-class Error:
+class OBugsError:
     message: str
