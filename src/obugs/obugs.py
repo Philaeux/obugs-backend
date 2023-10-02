@@ -49,6 +49,7 @@ class Obugs:
 
         # Routes
         MyGraphQLView.config = self.config
+        MyGraphQLView.engine = self.database.engine
         self.app.add_url_rule(
             "/graphql",
             view_func=MyGraphQLView.as_view("graphql_view", schema=schema)

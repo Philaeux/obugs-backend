@@ -37,8 +37,6 @@ class Database:
         """Defines all necessary ressources (URI & engine) and create database if necessary."""
 
         dir_uri = os.path.dirname(__file__)
-        alembic = Path(dir_uri) / ".." / ".." / "alembic.ini"
-        migrations = Path(dir_uri) / ".." / "alembic"
         if uri == '':
             self.uri = f"sqlite+pysqlite:///{dir_uri}/sqlite.db"
         else:
@@ -47,6 +45,8 @@ class Database:
 
         # Upgrade application to heads
         if check_migrations:
+            alembic = Path(dir_uri) / ".." / ".." / "alembic.ini"
+            migrations = Path(dir_uri) / ".." / "alembic"
             alembic_cfg = Config(alembic)
             alembic_cfg.set_main_option('script_location', str(migrations))
             alembic_cfg.set_main_option('sqlalchemy.url', self.uri)

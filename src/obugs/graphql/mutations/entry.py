@@ -38,7 +38,7 @@ class MutationEntry:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")

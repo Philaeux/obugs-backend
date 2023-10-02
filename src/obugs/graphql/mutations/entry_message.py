@@ -41,7 +41,7 @@ class MutationEntryMessage:
         if comment == '':
             return OBugsError(message="Empty comment")
 
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
@@ -59,9 +59,9 @@ class MutationEntryMessage:
 
     @strawberry.mutation
     @jwt_required()
-    def delete_message(self, message_id: UUID) -> OBugsError | MessageDeleteSuccess:
+    def delete_message(self, info, message_id: UUID) -> OBugsError | MessageDeleteSuccess:
         current_user = get_jwt_identity()
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or not db_user.is_admin or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")
@@ -97,7 +97,7 @@ class MutationEntryMessage:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
@@ -165,9 +165,9 @@ class MutationEntryMessage:
 
     @strawberry.mutation
     @jwt_required()
-    def process_patch(self, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
+    def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
         current_user = get_jwt_identity()
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or not db_user.is_admin:
                 return OBugsError(message="User is not admin.")

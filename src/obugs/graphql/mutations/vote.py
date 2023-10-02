@@ -19,9 +19,9 @@ class MutationVote:
 
     @strawberry.mutation
     @jwt_required()
-    def vote(self, subject_id: uuid.UUID, rating: int) -> OBugsError | VoteUpdate:
+    def vote(self, info, subject_id: uuid.UUID, rating: int) -> OBugsError | VoteUpdate:
         current_user = get_jwt_identity()
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")

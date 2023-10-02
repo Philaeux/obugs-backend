@@ -16,10 +16,10 @@ class MutationSoftware:
 
     @strawberry.mutation
     @jwt_required()
-    def upsert_software(self, id: str, full_name: str, editor: str, description: str, language: str) -> OBugsError | Software:
+    def upsert_software(self, info, id: str, full_name: str, editor: str, description: str, language: str) -> OBugsError | Software:
         current_user = get_jwt_identity()
 
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned or not db_user.is_admin:
                 return OBugsError(message="Mutation not allowed for this user.")

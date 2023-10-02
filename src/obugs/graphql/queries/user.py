@@ -17,9 +17,9 @@ class QueryUser:
 
     @strawberry.field
     @jwt_required()
-    def current_user(self) -> OBugsError | User:
+    def current_user(self, info) -> OBugsError | User:
         current_user = get_jwt_identity()
-        with Session(Database().engine) as session:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
             if db_user is None:
                 return OBugsError(message="No user found with specified id.")
@@ -28,8 +28,8 @@ class QueryUser:
             return db_user.gql()
 
     @strawberry.field
-    def user(self, user_id: uuid.UUID) -> User | None:
-        with Session(Database().engine) as session:
+    def user(self, info, user_id: uuid.UUID) -> User | None:
+        with Session(info.context['engine']) as session:
             db_user = session.query(UserEntity).where(UserEntity.id == user_id).one_or_none()
             if db_user is None:
                 return None

@@ -14,8 +14,8 @@ from obugs.graphql.types.entry_message import EntryMessage
 class QueryEntryMessage:
 
     @strawberry.field
-    def entry_messages(self, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) -> list[EntryMessage]:
-        with Session(Database().engine) as session:
+    def entry_messages(self, info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) -> list[EntryMessage]:
+        with Session(info.context['engine']) as session:
             sql = select(EntryMessageEntity)\
                 .where(EntryMessageEntity.entry_id == entry_id)\
                 .order_by(EntryMessageEntity.created_at).offset(offset) \
