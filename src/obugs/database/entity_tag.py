@@ -14,8 +14,8 @@ class TagEntity(BaseEntity):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column()
     software_id: Mapped[str] = mapped_column(ForeignKey("software.id"), index=True)
-    font_color: Mapped[str] = mapped_column(default='#000000')
-    background_color: Mapped[str] = mapped_column(default='#e0e0e0')
+    font_color: Mapped[str] = mapped_column()
+    background_color: Mapped[str] = mapped_column()
 
     software: Mapped["SoftwareEntity"] = relationship(back_populates="tags")
     entries: Mapped[List["EntryEntity"]] = relationship(secondary=association_tags_entries, back_populates="tags")

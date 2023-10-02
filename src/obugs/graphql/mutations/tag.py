@@ -34,12 +34,12 @@ class MutationTag:
                 db_tag = session.query(TagEntity).where(TagEntity.id == id).one_or_none()
                 if db_tag is None:
                     return OBugsError(message="No such tag to edit.")
+                db_tag.software_id = software_id
+                db_tag.name = name
+                db_tag.font_color = font_color
+                db_tag.background_color = background_color
             else:
-                db_tag = TagEntity(id=uuid.uuid4(), software_id=software_id)
+                db_tag = TagEntity(id=uuid.uuid4(), software_id=software_id, name=name, font_color=font_color, background_color=background_color)
                 session.add(db_tag)
-
-            db_tag.name = name
-            db_tag.font_color = font_color
-            db_tag.font_background = background_color
             session.commit()
             return db_tag.gql()

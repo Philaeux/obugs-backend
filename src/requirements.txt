@@ -8,3 +8,4 @@ Flask-mail
 Tornado
 Werkzeug
 psycopg2-binary
+requests
