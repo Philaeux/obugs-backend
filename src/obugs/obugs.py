@@ -26,7 +26,7 @@ class Obugs:
 
     def __init__(self):
         self.app = Flask(__name__)
-        CORS(self.app)
+        CORS(self.app, origins=["http://localhost:4200", "https://obugs.the-cluster.org"])
 
         self.config = configparser.ConfigParser()
         self.config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")

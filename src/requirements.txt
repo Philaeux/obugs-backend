@@ -3,7 +3,9 @@ strawberry-graphql
 SQLAlchemy
 flask-jwt-extended
 Flask
+Flask-CORS
+Flask-mail
 Tornado
 Werkzeug
-psycopg2
+psycopg2-binary
 requests
