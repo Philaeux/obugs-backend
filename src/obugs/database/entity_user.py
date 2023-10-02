@@ -22,11 +22,24 @@ class UserEntity(BaseEntity):
     activation_token: Mapped[str] = mapped_column(String(32))
 
     votes: Mapped[List["VoteEntity"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    roles = relationship("UserSoftwareRoleEntity", back_populates="user")
 
     def gql(self):
+        software_is = {'mod': [], 'curator': [], 'editor': []}
+        for role in self.roles:
+            print(role)
+            if role.role & 1 != 0:
+                software_is['mod'].append(role.software_id)
+            if role.role & 2 != 0:
+                software_is['curator'].append(role.software_id)
+            if role.role & 4 != 0:
+                software_is['editor'].append(role.software_id)
         return User(
             id=self.id,
             username=self.username,
             is_admin=self.is_admin,
-            is_banned=self.is_banned
+            is_banned=self.is_banned,
+            software_is_mod=software_is['mod'],
+            software_is_curator=software_is['curator'],
+            software_is_editor=software_is['editor'],
         )

@@ -1,4 +1,4 @@
-from  datetime import datetime
+from datetime import datetime
 import json
 import uuid
 from uuid import UUID
@@ -73,7 +73,8 @@ class MutationEntryMessage:
             if to_delete.type == 'patch':
                 for vote in session.query(VoteEntity).where(VoteEntity.subject_id == to_delete.id):
                     session.delete(vote)
-                to_delete.entry.open_patches_count = session.query(EntryMessagePatchEntity).where(EntryMessagePatchEntity.is_closed is False).count()
+                to_delete.entry.open_patches_count = session.query(EntryMessagePatchEntity).where(
+                    EntryMessagePatchEntity.is_closed is False).count()
 
             session.delete(to_delete)
             session.commit()
@@ -153,7 +154,9 @@ class MutationEntryMessage:
                 rating=1
             )
             db_entry.updated_at = datetime.utcnow()
-            db_entry.open_patches_count = session.query(EntryMessagePatchEntity).where(EntryMessagePatchEntity.is_closed is False).count()
+            db_entry.open_patches_count = session.query(EntryMessagePatchEntity).where(
+                EntryMessagePatchEntity.entry_id == db_entry.id,
+                EntryMessagePatchEntity.is_closed == False).count() + 1
             session.add(patch)
             session.add(vote)
             session.commit()
@@ -206,7 +209,10 @@ class MutationEntryMessage:
                                                                 TagEntity.name == tag).one_or_none()
                         if db_tag is not None:
                             db_message.entry.tags.append(db_tag)
-            db_message.entry.open_patches_count = session.query(EntryMessagePatchEntity).where(EntryMessagePatchEntity.is_closed is False).count()
+
+            db_message.entry.open_patches_count = session.query(EntryMessagePatchEntity).where(
+                EntryMessagePatchEntity.entry_id == db_message.entry.id,
+                EntryMessagePatchEntity.is_closed == False).count()
             session.commit()
 
             return ProcessPatchSuccess(entry_message=db_message.gql(), entry=db_message.entry.gql())

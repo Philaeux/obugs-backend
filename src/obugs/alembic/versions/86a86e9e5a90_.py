@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 44153ed6a242
+Revision ID: 86a86e9e5a90
 Revises: 
-Create Date: 2023-10-01 16:50:19.382070
+Create Date: 2023-10-02 12:36:10.909705
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '44153ed6a242'
+revision: str = '86a86e9e5a90'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -68,6 +68,14 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_tag_software_id'), 'tag', ['software_id'], unique=False)
+    op.create_table('user_software_role',
+    sa.Column('user_id', sa.Uuid(), nullable=False),
+    sa.Column('software_id', sa.String(), nullable=False),
+    sa.Column('role', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['software_id'], ['software.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('user_id', 'software_id')
+    )
     op.create_table('vote',
     sa.Column('id', sa.Uuid(), nullable=False),
     sa.Column('subject_id', sa.Uuid(), nullable=False),
@@ -117,6 +125,7 @@ def downgrade() -> None:
     op.drop_table('association_tags_entries')
     op.drop_index('idx_vote_user_subject', table_name='vote')
     op.drop_table('vote')
+    op.drop_table('user_software_role')
     op.drop_index(op.f('ix_tag_software_id'), table_name='tag')
     op.drop_table('tag')
     op.drop_index(op.f('ix_entry_id'), table_name='entry')
