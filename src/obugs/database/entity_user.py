@@ -27,7 +27,6 @@ class UserEntity(BaseEntity):
     def gql(self):
         software_is = {'mod': [], 'curator': [], 'editor': []}
         for role in self.roles:
-            print(role)
             if role.role & 1 != 0:
                 software_is['mod'].append(role.software_id)
             if role.role & 2 != 0:

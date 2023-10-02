@@ -5,7 +5,6 @@ import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.orm import Session
 
-from obugs.database.database import Database
 from obugs.database.entity_user import UserEntity
 from obugs.database.entity_software import SoftwareEntity
 from obugs.database.entity_tag import TagEntity
