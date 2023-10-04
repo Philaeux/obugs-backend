@@ -6,8 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from obugs.database.database import (
-    BaseEntity, association_tags_entries, SoftwareEntity, UserEntity, TagEntity, EntryEntity, VoteEntity,
-    EntryStatus, EntryMessageCommentEntity, EntryMessagePatchEntity, EntryMessageEntity, EntryMessageCreationEntity
+    Base, association_tags_entries, Software, User, Tag, Entry, Vote,
+    EntryStatus, EntryMessageComment, EntryMessagePatch, EntryMessage, EntryMessageCreation
 )
 
 # this is the Alembic Config object, which provides
@@ -23,7 +23,7 @@ config = context.config
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = BaseEntity.metadata
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

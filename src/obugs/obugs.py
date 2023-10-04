@@ -19,7 +19,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from obugs.graphql.graphql_view import MyGraphQLView
 from obugs.graphql.schema import schema
 from obugs.database.database import Database
-from obugs.database.entity_user import UserEntity
+from obugs.database.user import User
 
 
 class Obugs:
@@ -49,7 +49,7 @@ class Obugs:
 
         # Routes
         MyGraphQLView.config = self.config
-        MyGraphQLView.engine = self.database.engine
+        MyGraphQLView.session_factory = self.database.session_factory
         self.app.add_url_rule(
             "/graphql",
             view_func=MyGraphQLView.as_view("graphql_view", schema=schema)
@@ -78,12 +78,12 @@ class Obugs:
                 return jsonify({'error': 'Error with recaptcha check.', 'message': ''})
 
             with Session(self.database.engine) as session:
-                if session.query(UserEntity).filter(UserEntity.username == username).first():
+                if session.query(User).filter(User.username == username).first():
                     return jsonify({'error': 'Username already used.', 'message': ''}), 200
-                if session.query(UserEntity).filter(UserEntity.email == email).first():
+                if session.query(User).filter(User.email == email).first():
                     return jsonify({'error': 'Email already used.', 'message': ''}), 200
 
-                new_user = UserEntity(
+                new_user = User(
                     username=username,
                     password=generate_password_hash(password, method='scrypt'),
                     email=email,
@@ -118,7 +118,7 @@ class Obugs:
                 return jsonify({'error': 'Invalid user or activate token.', 'message': ''}), 200
 
             with Session(self.database.engine) as session:
-                user = session.query(UserEntity).filter(UserEntity.username == username).first()
+                user = session.query(User).filter(User.username == username).first()
                 if not user or user.activation_token != token:
                     return jsonify({'error': 'Invalid or activate token.', 'message': ''}), 200
                 user.is_activated = True
@@ -132,7 +132,7 @@ class Obugs:
             password = data.get('password')
 
             with Session(self.database.engine) as session:
-                user = session.query(UserEntity).filter(UserEntity.username == username).first()
+                user = session.query(User).filter(User.username == username).first()
 
                 if not user or not check_password_hash(user.password, password):
                     return jsonify({'error': 'Invalid username or password.', 'message': ''}), 200

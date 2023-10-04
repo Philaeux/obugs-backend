@@ -9,3 +9,4 @@ Tornado
 Werkzeug
 psycopg2-binary
 requests
+strawberry-sqlalchemy-mapper

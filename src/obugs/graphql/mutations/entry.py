@@ -1,21 +1,19 @@
 import datetime
 import json
 import uuid
-from uuid import UUID
+from typing import Annotated
 
 import requests
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy.orm import Session
 
-from obugs.database.database import Database
-from obugs.database.entity_entry import EntryEntity, EntryStatus
-from obugs.database.entity_entry_message import EntryMessageCreationEntity
-from obugs.database.entity_tag import TagEntity
-from obugs.database.entity_user import UserEntity
-from obugs.database.entity_vote import VoteEntity
-from obugs.graphql.types.entry import Entry
-from obugs.graphql.types.obugs_error import OBugsError
+from obugs.database.entry import Entry as EntryEntity, EntryStatus
+from obugs.database.entry_message import EntryMessageCreation
+from obugs.database.tag import Tag
+from obugs.database.user import User
+from obugs.database.vote import Vote
+
+from obugs.graphql.types import OBugsError
 
 
 @strawberry.type
@@ -24,7 +22,7 @@ class MutationEntry:
     @strawberry.mutation
     @jwt_required()
     def create_entry(self, info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
-                     illustration: str) -> OBugsError | Entry:
+                     illustration: str) -> OBugsError | Annotated["Entry", strawberry.lazy("..types")]:
         current_user = get_jwt_identity()
 
         try:
@@ -38,8 +36,8 @@ class MutationEntry:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
-        with Session(info.context['engine']) as session:
-            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+        with info.context['session_factory']() as session:
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
@@ -48,11 +46,11 @@ class MutationEntry:
                                 created_at=datetime.datetime.utcnow(),
                                 updated_at=datetime.datetime.utcnow(), open_patches_count=0)
             for tag in tags:
-                tag_entity = session.query(TagEntity).where(TagEntity.software_id == software_id,
-                                                            TagEntity.name == tag).one_or_none()
+                tag_entity = session.query(Tag).where(Tag.software_id == software_id,
+                                                      Tag.name == tag).one_or_none()
                 if tag_entity is not None:
                     entry.tags.append(tag_entity)
-            vote = VoteEntity(user_id=db_user.id, subject_id=entry.id, rating=2)
+            vote = Vote(user_id=db_user.id, subject_id=entry.id, rating=2)
             state_after = json.dumps({
                 'title': entry.title,
                 'description': entry.description,
@@ -60,10 +58,10 @@ class MutationEntry:
                 'status': str(entry.status.value),
                 'tags': [str(tag.name) for tag in entry.tags]
             })
-            message = EntryMessageCreationEntity(entry=entry, user_id=db_user.id,
-                                                 created_at=datetime.datetime.utcnow(), state_after=state_after)
+            message = EntryMessageCreation(entry=entry, user_id=db_user.id,
+                                           created_at=datetime.datetime.utcnow(), state_after=state_after)
             session.add(entry)
             session.add(vote)
             session.add(message)
             session.commit()
-            return entry.gql()
+            return entry

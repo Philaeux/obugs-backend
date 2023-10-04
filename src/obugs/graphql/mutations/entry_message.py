@@ -2,21 +2,19 @@ from datetime import datetime
 import json
 import uuid
 from uuid import UUID
+from typing import Annotated
 
 import requests
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy.orm import Session
 
-from obugs.database.database import Database
-from obugs.database.entity_tag import TagEntity
-from obugs.database.entity_user import UserEntity
-from obugs.database.entity_entry import EntryEntity, EntryStatus
-from obugs.database.entity_entry_message import EntryMessageEntity, EntryMessagePatchEntity, EntryMessageCommentEntity
-from obugs.graphql.types.entry_message import EntryMessage
-from obugs.graphql.types.obugs_error import OBugsError
-from obugs.graphql.types.composites import MessageDeleteSuccess, ProcessPatchSuccess
-from obugs.database.entity_vote import VoteEntity
+
+from obugs.database.tag import Tag
+from obugs.database.user import User
+from obugs.database.entry import Entry, EntryStatus
+from obugs.database.entry_message import EntryMessage, EntryMessagePatch, EntryMessageComment
+from obugs.database.vote import Vote
+from obugs.graphql.types import OBugsError, MessageDeleteSuccess, ProcessPatchSuccess
 
 
 @strawberry.type
@@ -24,7 +22,7 @@ class MutationEntryMessage:
 
     @strawberry.mutation
     @jwt_required()
-    def comment_entry(self, info, recaptcha: str, entry_id: UUID, comment: str) -> OBugsError | EntryMessage:
+    def comment_entry(self, info, recaptcha: str, entry_id: UUID, comment: str) -> OBugsError | Annotated["EntryMessageComment", strawberry.lazy("..types")]:
         current_user = get_jwt_identity()
 
         try:
@@ -41,40 +39,40 @@ class MutationEntryMessage:
         if comment == '':
             return OBugsError(message="Empty comment")
 
-        with Session(info.context['engine']) as session:
-            db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
+        with info.context['session_factory']() as session:
+            db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
-            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
-            message = EntryMessageCommentEntity(entry=db_entry, user_id=db_user.id,
-                                                created_at=datetime.utcnow(),
-                                                comment=comment)
+            message = EntryMessageComment(entry=db_entry, user_id=db_user.id,
+                                          created_at=datetime.utcnow(),
+                                          comment=comment)
             session.add(message)
             db_entry.updated_at = datetime.utcnow()
             session.commit()
-            return message.gql()
+            return message
 
     @strawberry.mutation
     @jwt_required()
     def delete_message(self, info, message_id: UUID) -> OBugsError | MessageDeleteSuccess:
         current_user = get_jwt_identity()
-        with Session(info.context['engine']) as session:
-            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+        with info.context['session_factory']() as session:
+            db_user = session.query(User).where(User.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or not db_user.is_admin or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")
 
-            to_delete = session.query(EntryMessageEntity).where(EntryMessageEntity.id == message_id).one_or_none()
+            to_delete = session.query(EntryMessag).where(EntryMessag.id == message_id).one_or_none()
             if to_delete is None:
                 return OBugsError(message="Target message not found.")
 
             if to_delete.type == 'patch':
-                for vote in session.query(VoteEntity).where(VoteEntity.subject_id == to_delete.id):
+                for vote in session.query(Vote).where(Vote.subject_id == to_delete.id):
                     session.delete(vote)
-                to_delete.entry.open_patches_count = session.query(EntryMessagePatchEntity).where(
-                    EntryMessagePatchEntity.is_closed is False).count()
+                to_delete.entry.open_patches_count = session.query(EntryMessagePatch).where(
+                    EntryMessagePatch.is_closed is False).count()
 
             session.delete(to_delete)
             session.commit()
@@ -83,7 +81,7 @@ class MutationEntryMessage:
     @strawberry.mutation
     @jwt_required()
     def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
-                     description: str, illustration: str) -> OBugsError | EntryMessage:
+                     description: str, illustration: str) -> OBugsError | Annotated["EntryMessagePatch", strawberry.lazy("..types")]:
         current_user = get_jwt_identity()
 
         try:
@@ -97,11 +95,11 @@ class MutationEntryMessage:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
-        with Session(info.context['engine']) as session:
-            db_entry = session.query(EntryEntity).where(EntryEntity.id == entry_id).one_or_none()
+        with info.context['session_factory']() as session:
+            db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
-            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
@@ -137,7 +135,7 @@ class MutationEntryMessage:
             if not is_modified:
                 return OBugsError(message="Patch contains no change.")
 
-            patch = EntryMessagePatchEntity(
+            patch = EntryMessagePatch(
                 id=uuid.uuid4(),
                 entry=db_entry,
                 user_id=db_user.id,
@@ -148,34 +146,34 @@ class MutationEntryMessage:
                 rating_count=1,
                 is_closed=False
             )
-            vote = VoteEntity(
+            vote = Vote(
                 subject_id=patch.id,
                 user_id=db_user.id,
                 rating=1
             )
             db_entry.updated_at = datetime.utcnow()
-            db_entry.open_patches_count = session.query(EntryMessagePatchEntity).where(
-                EntryMessagePatchEntity.entry_id == db_entry.id,
-                EntryMessagePatchEntity.is_closed == False).count() + 1
+            db_entry.open_patches_count = session.query(EntryMessagePatch).where(
+                EntryMessagePatch.entry_id == db_entry.id,
+                EntryMessagePatch.is_closed == False).count() + 1
             session.add(patch)
             session.add(vote)
             session.commit()
 
-            return patch.gql()
+            return patch
 
     @strawberry.mutation
     @jwt_required()
     def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
         current_user = get_jwt_identity()
-        with Session(info.context['engine']) as session:
-            db_user = session.query(UserEntity).where(UserEntity.id == UUID(current_user['id'])).one_or_none()
+        with info.context['session_factory']() as session:
+            db_user = session.query(User).where(User.id == UUID(current_user['id'])).one_or_none()
             if db_user is None or not db_user.is_admin:
                 return OBugsError(message="User is not admin.")
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
-            db_message = session.query(EntryMessagePatchEntity).where(
-                EntryMessagePatchEntity.id == message_id).one_or_none()
+            db_message = session.query(EntryMessagePatch).where(
+                EntryMessagePatch.id == message_id).one_or_none()
             if db_message is None or db_message.type != 'patch' or db_message.is_closed:
                 return OBugsError(message="Invalid patch to process.")
 
@@ -200,19 +198,19 @@ class MutationEntryMessage:
                     to_remove = [item for item in state_before['tags'] if item not in state_after['tags']]
                     to_add = [item for item in state_after['tags'] if item not in state_before['tags']]
                     for tag in to_remove:
-                        db_tag = session.query(TagEntity).where(TagEntity.software_id == db_message.entry.software_id,
-                                                                TagEntity.name == tag).one_or_none()
+                        db_tag = session.query(Tag).where(Tag.software_id == db_message.entry.software_id,
+                                                          Tag.name == tag).one_or_none()
                         if db_tag is not None:
                             db_message.entry.tags.remove(db_tag)
                     for tag in to_add:
-                        db_tag = session.query(TagEntity).where(TagEntity.software_id == db_message.entry.software_id,
-                                                                TagEntity.name == tag).one_or_none()
+                        db_tag = session.query(Tag).where(Tag.software_id == db_message.entry.software_id,
+                                                          Tag.name == tag).one_or_none()
                         if db_tag is not None:
                             db_message.entry.tags.append(db_tag)
 
-            db_message.entry.open_patches_count = session.query(EntryMessagePatchEntity).where(
-                EntryMessagePatchEntity.entry_id == db_message.entry.id,
-                EntryMessagePatchEntity.is_closed == False).count()
+            db_message.entry.open_patches_count = session.query(EntryMessagePatch).where(
+                EntryMessagePatch.entry_id == db_message.entry.id,
+                EntryMessagePatch.is_closed == False).count()
             session.commit()
 
-            return ProcessPatchSuccess(entry_message=db_message.gql(), entry=db_message.entry.gql())
+            return ProcessPatchSuccess(entry_message=db_message, entry=db_message.entry)

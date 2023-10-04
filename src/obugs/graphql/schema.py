@@ -14,6 +14,8 @@ from obugs.graphql.queries.tag import QueryTag
 from obugs.graphql.queries.user import QueryUser
 from obugs.graphql.queries.vote import QueryVote
 
+from obugs.graphql.types import strawberry_sqlalchemy_mapper
+
 
 @strawberry.type
 class Mutation(MutationEntry, MutationEntryMessage, MutationSoftware, MutationTag, MutationUser, MutationVote):
@@ -25,4 +27,7 @@ class Query(QueryEntry, QueryEntryMessage, QuerySoftware, QueryTag, QueryUser, Q
     pass
 
 
-schema = strawberry.Schema(query=Query, mutation=Mutation)
+strawberry_sqlalchemy_mapper.finalize()
+additional_types = list(strawberry_sqlalchemy_mapper.mapped_types.values())
+
+schema = strawberry.Schema(query=Query, mutation=Mutation, types=additional_types)

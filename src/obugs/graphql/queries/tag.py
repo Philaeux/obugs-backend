@@ -1,10 +1,9 @@
+from typing import Annotated
+
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
-from obugs.database.database import Database
-from obugs.database.entity_tag import TagEntity
-from obugs.graphql.types.tag import Tag
+from obugs.database.tag import Tag
 
 
 # noinspection PyArgumentList
@@ -12,8 +11,7 @@ from obugs.graphql.types.tag import Tag
 class QueryTag:
 
     @strawberry.field
-    def tags(self, info, software_id: str) -> list[Tag]:
-        with Session(info.context['engine']) as session:
-            sql = select(TagEntity).where(TagEntity.software_id == software_id).order_by(TagEntity.name)
-            db_tag = session.execute(sql).scalars().all()
-            return [tag.gql() for tag in db_tag]
+    def tags(self, info, software_id: str) -> list[Annotated["Tag", strawberry.lazy("..types")]]:
+        with info.context['session_factory']() as session:
+            sql = select(Tag).where(Tag.software_id == software_id).order_by(Tag.name)
+            return session.execute(sql).scalars().all()

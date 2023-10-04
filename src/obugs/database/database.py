@@ -5,15 +5,16 @@ from alembic import command
 from alembic.config import Config
 
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from obugs.database.entity_base import BaseEntity, association_tags_entries
-from obugs.database.entity_software import SoftwareEntity
-from obugs.database.entity_user import UserEntity
-from obugs.database.entity_tag import TagEntity
-from obugs.database.entity_entry import EntryEntity, EntryStatus
-from obugs.database.entity_vote import VoteEntity
-from obugs.database.entity_entry_message import (EntryMessageCommentEntity, EntryMessageEntity,
-                                                 EntryMessagePatchEntity, EntryMessageCreationEntity)
+from obugs.database.entity_base import Base, association_tags_entries
+from obugs.database.software import Software
+from obugs.database.user import User
+from obugs.database.tag import Tag
+from obugs.database.entry import Entry, EntryStatus
+from obugs.database.vote import Vote
+from obugs.database.entry_message import (EntryMessageComment, EntryMessage,
+                                          EntryMessagePatch, EntryMessageCreation)
 
 
 class Database:
@@ -42,6 +43,7 @@ class Database:
         else:
             self.uri = uri
         self.engine = create_engine(self.uri, echo=False)
+        self.session_factory = sessionmaker(self.engine)
 
         # Upgrade application to heads
         if check_migrations:

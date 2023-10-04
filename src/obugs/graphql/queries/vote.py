@@ -1,13 +1,10 @@
 import uuid
-from uuid import UUID
+from typing import Annotated
 
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy.orm import Session
 
-from obugs.database.database import Database
-from obugs.database.entity_vote import VoteEntity
-from obugs.graphql.types.vote import Vote
+from obugs.database.vote import Vote
 
 
 # noinspection PyArgumentList
@@ -16,12 +13,9 @@ class QueryVote:
 
     @strawberry.field
     @jwt_required()
-    def my_vote(self, info, subject_id: uuid.UUID) -> Vote | None:
+    def my_vote(self, info, subject_id: uuid.UUID) -> Annotated["Vote", strawberry.lazy("..types")] | None:
         current_user = get_jwt_identity()
-        with Session(info.context['engine']) as session:
-            db_vote = session.query(VoteEntity).where(VoteEntity.user_id == UUID(current_user['id']),
-                                                      VoteEntity.subject_id == subject_id).one_or_none()
-            if db_vote is None:
-                return None
-            else:
-                return db_vote.gql()
+        with info.context['session_factory']() as session:
+            db_vote = session.query(Vote).where(Vote.user_id == uuid.UUID(current_user['id']),
+                                                Vote.subject_id == subject_id).one_or_none()
+            return db_vote
