@@ -195,7 +195,7 @@ class MutationEntryMessage:
                 if 'description' in state_after:
                     db_message.entry.description = state_after['description']
                 if 'illustration' in state_after:
-                    db_message.entry.description = state_after['illustration']
+                    db_message.entry.illustration = state_after['illustration']
                 if 'tags' in state_after:
                     to_remove = [item for item in state_before['tags'] if item not in state_after['tags']]
                     to_add = [item for item in state_after['tags'] if item not in state_before['tags']]
