@@ -2,7 +2,7 @@ import uuid
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, Index
 
 from obugs.database.entity_base import BaseEntity, association_tags_entries
 from obugs.graphql.types.tag import Tag
@@ -19,6 +19,10 @@ class TagEntity(BaseEntity):
 
     software: Mapped["SoftwareEntity"] = relationship(back_populates="tags")
     entries: Mapped[List["EntryEntity"]] = relationship(secondary=association_tags_entries, back_populates="tags")
+
+    __table_args__ = (
+        Index('idx_tag_software_id_name', software_id, name),
+    )
 
     def gql(self):
         return Tag(

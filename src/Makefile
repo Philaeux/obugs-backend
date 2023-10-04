@@ -21,6 +21,7 @@ win-clean:
 win-gen-migrations:
 	.\.env\Scripts\alembic.exe revision --autogenerate
 
+
 #######################################
 #          Unix environment           #
 #######################################
@@ -39,3 +40,9 @@ unix-run:
 ## Remove development environment
 unix-clean:
 	rm -rf .venv
+
+import-database-snapshot:
+	sudo rsync -avz --stats philaeux@luna.the-cluster.org:~/obugs_postgres_save/ ../obugs_postgres_data
+
+create-database-snapshot:
+	sudo rsync -av --no-perms --chown=$(whoami) obugs_postgres_data/ obugs_postgres_save

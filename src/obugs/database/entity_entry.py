@@ -4,7 +4,7 @@ import uuid
 from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, BigInteger, Text, Index
+from sqlalchemy import ForeignKey, BigInteger, Text, Index, event
 
 from obugs.database.entity_base import BaseEntity, association_tags_entries
 from obugs.graphql.types.entry import Entry
@@ -21,6 +21,11 @@ class EntryStatus (enum.Enum):
     CLOSED = "CLOSED"
 
 
+def rating_on_update(context):
+    entity = context.get_current_parameters()
+    return entity['rating_total'] / max(1, entity['rating_count'])
+
+
 class EntryEntity(BaseEntity):
     __tablename__ = "entry"
 
@@ -30,6 +35,7 @@ class EntryEntity(BaseEntity):
     description: Mapped[str] = mapped_column(Text())
     illustration: Mapped[str] = mapped_column(Text())
     status: Mapped[EntryStatus] = mapped_column()
+    rating: Mapped[float] = mapped_column()
     rating_total: Mapped[int] = mapped_column(BigInteger(), default=2)
     rating_count: Mapped[int] = mapped_column(BigInteger(), default=1)
     created_at: Mapped[datetime] = mapped_column()
@@ -59,3 +65,13 @@ class EntryEntity(BaseEntity):
             rating_count=self.rating_count,
             open_patches_count=self.open_patches_count
         )
+
+
+@event.listens_for(EntryEntity.rating_total, 'set')
+def on_rating_total_change(target, value, oldvalue, initiator):
+    target.rating = value / max(1, target.rating_count)
+
+
+@event.listens_for(EntryEntity.rating_count, 'set')
+def on_rating_count_change(target, value, oldvalue, initiator):
+    target.rating = target.rating_total / max(1, value)

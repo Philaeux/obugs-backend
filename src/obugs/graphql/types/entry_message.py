@@ -19,4 +19,3 @@ class EntryMessage:
     closed_at: datetime.datetime | None
     closed_by_id: uuid.UUID | None
     accepted: bool | None
-
