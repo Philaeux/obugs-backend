@@ -4,8 +4,6 @@ import uuid
 
 import requests
 import strawberry
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from sqlalchemy.orm import with_polymorphic
 
 from obugs.database.tag import Tag
 from obugs.database.user import User
@@ -14,16 +12,18 @@ from obugs.database.entry_message import EntryMessage, EntryMessagePatch, EntryM
 from obugs.database.vote import Vote
 from obugs.graphql.types import OBugsError, MessageDeleteSuccess, ProcessPatchSuccess, \
     EntryMessageComment as EntryMessageCommentGQL, EntryMessagePatch as EntryMessagePatchGQL
+from obugs.helpers import check_user
 
 
 @strawberry.type
 class MutationEntryMessage:
 
     @strawberry.mutation
-    @jwt_required()
     def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID,
                       comment: str) -> OBugsError | EntryMessageCommentGQL:
-        current_user = get_jwt_identity()
+        current_user = check_user(info.context)
+        if current_user is None:
+            return OBugsError(message="Not logged client")
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
@@ -43,7 +43,7 @@ class MutationEntryMessage:
             db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
-            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
@@ -57,11 +57,13 @@ class MutationEntryMessage:
             return session.query(EntryMessageComment).where(EntryMessageComment.id == message_id).one_or_none()
 
     @strawberry.mutation
-    @jwt_required()
     def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | MessageDeleteSuccess:
-        current_user = get_jwt_identity()
+        current_user = check_user(info.context)
+        if current_user is None:
+            return OBugsError(message="Not logged client")
+
         with info.context['session_factory']() as session:
-            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or not db_user.is_admin or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")
 
@@ -80,10 +82,11 @@ class MutationEntryMessage:
             return MessageDeleteSuccess(success=True)
 
     @strawberry.mutation
-    @jwt_required()
     def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
                      description: str, illustration: str) -> OBugsError | EntryMessagePatchGQL:
-        current_user = get_jwt_identity()
+        current_user = check_user(info.context)
+        if current_user is None:
+            return OBugsError(message="Not logged client")
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
@@ -100,7 +103,7 @@ class MutationEntryMessage:
             db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
-            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
@@ -160,11 +163,13 @@ class MutationEntryMessage:
             return session.query(EntryMessagePatch).where(EntryMessagePatch.id == patch_id).one_or_none()
 
     @strawberry.mutation
-    @jwt_required()
     def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
-        current_user = get_jwt_identity()
+        current_user = check_user(info.context)
+        if current_user is None:
+            return OBugsError(message="Not logged client")
+
         with info.context['session_factory']() as session:
-            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or not db_user.is_admin:
                 return OBugsError(message="User is not admin.")
             if db_user is None or db_user.is_banned:
@@ -178,7 +183,7 @@ class MutationEntryMessage:
             db_message.is_closed = True
             db_message.accepted = accept
             db_message.closed_at = datetime.utcnow()
-            db_message.closed_by_id = uuid.UUID(current_user['id'])
+            db_message.closed_by_id = uuid.UUID(current_user)
 
             db_message.entry.updated_at = datetime.utcnow()
             if accept:

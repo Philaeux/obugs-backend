@@ -1,10 +1,8 @@
 alembic
 strawberry-graphql
 SQLAlchemy
-flask-jwt-extended
-Flask
-Flask-CORS
-Flask-mail
+fastapi[all]
+python-jose[pycryptodome]
 Tornado
 Werkzeug
 psycopg2-binary

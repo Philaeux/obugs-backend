@@ -4,7 +4,6 @@ import uuid
 
 import requests
 import strawberry
-from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from obugs.database.entry import Entry, EntryStatus
 from obugs.database.entry_message import EntryMessageCreation
@@ -12,6 +11,7 @@ from obugs.database.tag import Tag
 from obugs.database.user import User
 from obugs.database.vote import Vote
 
+from obugs.helpers import check_user
 from obugs.graphql.types import OBugsError, Entry as EntryGQL
 
 
@@ -19,10 +19,11 @@ from obugs.graphql.types import OBugsError, Entry as EntryGQL
 class MutationEntry:
 
     @strawberry.mutation
-    @jwt_required()
     def create_entry(self, info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
                      illustration: str) -> OBugsError | EntryGQL:
-        current_user = get_jwt_identity()
+        current_user = check_user(info.context)
+        if current_user is None:
+            return OBugsError(message="Not logged client")
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
@@ -36,7 +37,7 @@ class MutationEntry:
             return OBugsError(message='Problem while checking recaptcha.')
 
         with info.context['session_factory']() as session:
-            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
