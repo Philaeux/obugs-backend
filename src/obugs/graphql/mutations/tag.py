@@ -1,5 +1,4 @@
 import uuid
-from typing import Annotated
 
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -7,7 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from obugs.database.user import User
 from obugs.database.software import Software
 from obugs.database.tag import Tag
-from obugs.graphql.types import OBugsError
+from obugs.graphql.types import OBugsError, Tag as TagGQL
 
 
 @strawberry.type
@@ -15,7 +14,7 @@ class MutationTag:
 
     @strawberry.mutation
     @jwt_required()
-    def upsert_tag(self, info, id: uuid.UUID | None, software_id: str, name: str, font_color: str, background_color: str) -> OBugsError | Annotated["Tag", strawberry.lazy("..types")]:
+    def upsert_tag(self, info, id: uuid.UUID | None, software_id: str, name: str, font_color: str, background_color: str) -> OBugsError | TagGQL:
         current_user = get_jwt_identity()
 
         with info.context['session_factory']() as session:
@@ -39,4 +38,5 @@ class MutationTag:
                 db_tag = Tag(id=uuid.uuid4(), software_id=software_id, name=name, font_color=font_color, background_color=background_color)
                 session.add(db_tag)
             session.commit()
-            return db_tag.gql()
+            # return db_tag
+            return session.query(Tag).where(Tag.id == id).one_or_none()

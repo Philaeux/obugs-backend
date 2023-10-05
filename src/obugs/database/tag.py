@@ -1,12 +1,9 @@
-
-
 import uuid
-from typing import List
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, Index, UUID
 
-from obugs.database.entity_base import Base, association_tags_entries
+from obugs.database.entity_base import Base
 
 
 class Tag(Base):
@@ -19,7 +16,6 @@ class Tag(Base):
     background_color: Mapped[str] = mapped_column()
 
     software: Mapped["Software"] = relationship("Software", foreign_keys=software_id, back_populates="tags")
-    entries: Mapped[List["Entry"]] = relationship(secondary=association_tags_entries, back_populates="tags")
 
     __table_args__ = (
         Index('idx_tag_software_id_name', software_id, name),

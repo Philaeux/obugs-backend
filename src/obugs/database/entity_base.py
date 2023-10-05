@@ -1,3 +1,5 @@
+import uuid
+
 from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import DeclarativeBase
 
@@ -13,4 +15,3 @@ association_tags_entries = Table(
     Column("tag_id", ForeignKey("tag.id"), primary_key=True),
     Column("entry_id", ForeignKey("entry.id"), primary_key=True),
 )
-

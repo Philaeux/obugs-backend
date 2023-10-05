@@ -34,6 +34,7 @@ class EntryMessageCreation(EntryMessage):
 
     __mapper_args__ = {
         "polymorphic_identity": "creation",
+        "polymorphic_load": "inline",
     }
 
 
@@ -42,6 +43,7 @@ class EntryMessageComment(EntryMessage):
 
     __mapper_args__ = {
         "polymorphic_identity": "comment",
+        "polymorphic_load": "inline",
     }
 
 
@@ -59,5 +61,6 @@ class EntryMessagePatch(EntryMessage):
 
     __mapper_args__ = {
         "polymorphic_identity": "patch",
+        "polymorphic_load": "inline",
     }
 

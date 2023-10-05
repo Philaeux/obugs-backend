@@ -6,8 +6,8 @@ from sqlalchemy import pool
 from alembic import context
 
 from obugs.database.database import (
-    Base, association_tags_entries, Software, User, Tag, Entry, Vote,
-    EntryStatus, EntryMessageComment, EntryMessagePatch, EntryMessage, EntryMessageCreation
+    Base, Software, User, Tag, Entry, Vote,
+    EntryStatus, EntryMessageComment, EntryMessagePatch, EntryMessage, EntryMessageCreation, UserSoftwareRole
 )
 
 # this is the Alembic Config object, which provides

@@ -7,7 +7,8 @@ import strawberry
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, BigInteger, Text, Index, event, UUID
 
-from obugs.database.entity_base import Base, association_tags_entries
+from obugs.database.entity_base import Base
+from obugs.database.entity_base import association_tags_entries
 
 
 @strawberry.enum
@@ -39,7 +40,7 @@ class Entry(Base):
     open_patches_count: Mapped[int] = mapped_column(default=0)
 
     software: Mapped["Software"] = relationship(back_populates="entries")
-    tags: Mapped[List["Tag"]] = relationship(secondary=association_tags_entries, back_populates="entries")
+    tags: Mapped[List["Tag"]] = relationship(secondary=association_tags_entries)
     messages: Mapped[List["EntryMessage"]] = relationship(back_populates="entry", cascade="all, delete-orphan")
 
     __table_args__ = (
@@ -49,9 +50,11 @@ class Entry(Base):
 
 @event.listens_for(Entry.rating_total, 'set')
 def on_rating_total_change(target, value, oldvalue, initiator):
-    target.rating = value / max(1, target.rating_count)
+    count = 1 if target.rating_count is None else target.rating_count
+    target.rating = value / max(1, count)
 
 
 @event.listens_for(Entry.rating_count, 'set')
 def on_rating_count_change(target, value, oldvalue, initiator):
-    target.rating = target.rating_total / max(1, value)
+    total = 2 if target.rating_total is None else target.rating_total
+    target.rating = total / max(1, value)

@@ -1,12 +1,11 @@
 from uuid import UUID
-from typing import Annotated
 
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from obugs.database.user import User
 from obugs.database.software import Software
-from obugs.graphql.types import OBugsError
+from obugs.graphql.types import OBugsError, Software as SoftwareGQL
 
 
 @strawberry.type
@@ -14,7 +13,8 @@ class MutationSoftware:
 
     @strawberry.mutation
     @jwt_required()
-    def upsert_software(self, info, id: str, full_name: str, editor: str, description: str, language: str) -> OBugsError | Annotated["Software", strawberry.lazy("..types")]:
+    def upsert_software(self, info, id: str, full_name: str, editor: str, description: str,
+                        language: str) -> OBugsError | SoftwareGQL:
         current_user = get_jwt_identity()
 
         with info.context['session_factory']() as session:
@@ -31,4 +31,5 @@ class MutationSoftware:
             db_software.description = description
             db_software.language = language
             session.commit()
-            return db_software
+            #return db_software
+            return session.query(Software).where(Software.id == id).one_or_none() (1)

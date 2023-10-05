@@ -7,11 +7,12 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from obugs.database.entity_base import Base, association_tags_entries
+from obugs.database.entity_base import Base
 from obugs.database.software import Software
 from obugs.database.user import User
 from obugs.database.tag import Tag
 from obugs.database.entry import Entry, EntryStatus
+from obugs.database.user_software_role import UserSoftwareRole
 from obugs.database.vote import Vote
 from obugs.database.entry_message import (EntryMessageComment, EntryMessage,
                                           EntryMessagePatch, EntryMessageCreation)

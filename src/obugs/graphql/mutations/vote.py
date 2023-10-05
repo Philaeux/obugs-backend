@@ -1,5 +1,4 @@
 import uuid
-from uuid import UUID
 
 import strawberry
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -19,7 +18,7 @@ class MutationVote:
     def vote(self, info, subject_id: uuid.UUID, rating: int) -> OBugsError | VoteUpdate:
         current_user = get_jwt_identity()
         with info.context['session_factory']() as session:
-            db_user = session.query(User).where(User.id == UUID(current_user['id'])).one_or_none()
+            db_user = session.query(User).where(User.id == uuid.UUID(current_user['id'])).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Banned user.")
 
@@ -33,7 +32,7 @@ class MutationVote:
                 db_vote = session.query(Vote).where(Vote.user_id == db_user.id,
                                                     Vote.subject_id == subject_id).one_or_none()
                 if db_vote is None:
-                    db_vote = Vote(user_id=db_user.id, subject_id=subject_id, rating=rating)
+                    db_vote = Vote(user=db_user, subject_id=subject_id, rating=rating)
                     session.add(db_vote)
                     db_entry.rating_count = db_entry.rating_count + 1
                 else:
@@ -48,7 +47,7 @@ class MutationVote:
                 db_vote = session.query(Vote).where(Vote.user_id == db_user.id,
                                                     Vote.subject_id == subject_id).one_or_none()
                 if db_vote is None:
-                    db_vote = Vote(user_id=db_user.id, subject_id=subject_id, rating=rating)
+                    db_vote = Vote(user=db_user, subject_id=subject_id, rating=rating)
                     session.add(db_vote)
                     db_patch.rating_count = db_patch.rating_count + 1
                 else:

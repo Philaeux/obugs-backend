@@ -1,29 +1,29 @@
 import uuid
-from typing import Annotated
 
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import with_polymorphic
 
-from obugs.database.database import Database
 from obugs.database.entry_message import EntryMessage, EntryMessagePatch
+from obugs.graphql.types import EntryMessagePatch as EntryMessagePatchGQL, \
+    EntryMessageComment as EntryMessageCommentGQL, EntryMessageCreation as EntryMessageCreationQGL
 
 
-# noinspection PyArgumentList
 @strawberry.type
 class QueryEntryMessage:
 
     @strawberry.field
-    def entry_messages(self, info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) -> list[Annotated["EntryMessage", strawberry.lazy("..types")]]:
+    def entry_messages(self, info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) -> list[EntryMessagePatchGQL | EntryMessageCommentGQL | EntryMessageCreationQGL]:
         with info.context['session_factory']() as session:
-            sql = select(EntryMessage)\
-                .where(EntryMessage.entry_id == entry_id)\
+            sql = select(EntryMessage) \
+                .where(EntryMessage.entry_id == entry_id) \
                 .order_by(EntryMessage.created_at).offset(offset) \
                 .limit(limit)
-            return session.execute(sql).scalars().all()
+            db_messages = session.execute(sql).scalars().all()
+            return db_messages
 
     @strawberry.field
-    def patches(self, info, software_id: str | None) -> list[Annotated["EntryMessagePatch", strawberry.lazy("..types")]]:
+    def patches(self, info, software_id: str | None) -> list[EntryMessagePatchGQL]:
         with info.context['session_factory']() as session:
             sql = select(EntryMessagePatch) \
                 .where(EntryMessagePatch.is_closed == False)
