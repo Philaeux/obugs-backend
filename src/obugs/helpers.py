@@ -6,7 +6,7 @@ from jose import jwt, JWTError
 
 def create_jwt_token(key: str, user_id: uuid.UUID):
     payload = {
-        "sub": user_id,
+        "sub": str(user_id),
         "exp": datetime.utcnow() + timedelta(days=60),
     }
     token = jwt.encode(payload, key, algorithm="HS256")
