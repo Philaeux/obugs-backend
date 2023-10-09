@@ -23,7 +23,7 @@ class QueryEntryMessage:
             return db_messages
 
     @strawberry.field
-    def patches(self, info, software_id: str | None) -> list[EntryMessagePatchGQL]:
+    def open_patches(self, info, software_id: str | None) -> list[EntryMessagePatchGQL]:
         with info.context['session_factory']() as session:
             sql = select(EntryMessagePatch) \
                 .where(EntryMessagePatch.is_closed == False)

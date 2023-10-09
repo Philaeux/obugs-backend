@@ -42,7 +42,7 @@ unix-clean:
 	rm -rf .venv
 
 import-database-snapshot:
-	sudo rsync -avz --stats philaeux@luna.the-cluster.org:~/obugs_postgres_save/ ../obugs_postgres_data
+	sudo rsync -avz --stats --delete philaeux@luna.the-cluster.org:~/obugs_postgres_save/ ../../obugs_postgres_data
 
 create-database-snapshot:
-	sudo rsync -av --no-perms --chown=$(whoami) obugs_postgres_data/ obugs_postgres_save
+	sudo rsync -av --no-perms --delete --chown=$(whoami) ../../obugs_postgres_data/ ../../obugs_postgres_save

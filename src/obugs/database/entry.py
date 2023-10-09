@@ -45,6 +45,7 @@ class Entry(Base):
 
     __table_args__ = (
         Index('idx_entry_software_and_update_at', software_id, updated_at.desc()),
+        Index('idx_entry_software_and_title', software_id, title),
     )
 
 

@@ -9,6 +9,7 @@ from obugs.database.tag import Tag
 from obugs.database.user import User
 from obugs.database.entry import Entry, EntryStatus
 from obugs.database.entry_message import EntryMessage, EntryMessagePatch, EntryMessageComment
+from obugs.database.user_software_role import SoftwareRole
 from obugs.database.vote import Vote
 from obugs.graphql.types import OBugsError, MessageDeleteSuccess, ProcessPatchSuccess, \
     EntryMessageComment as EntryMessageCommentGQL, EntryMessagePatch as EntryMessagePatchGQL
@@ -64,12 +65,15 @@ class MutationEntryMessage:
 
         with info.context['session_factory']() as session:
             db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
-            if db_user is None or not db_user.is_admin or db_user.is_banned:
+            if db_user is None or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")
 
             to_delete = session.query(EntryMessage).where(EntryMessage.id == message_id).one_or_none()
             if to_delete is None:
                 return OBugsError(message="Target message not found.")
+
+            if not db_user.is_admin and not db_user.is_role_on_software(SoftwareRole.MOD, to_delete.entry.software_id):
+                return OBugsError(message="Impossible for user to do this action.")
 
             if to_delete.type == 'patch':
                 for vote in session.query(Vote).where(Vote.subject_id == to_delete.id):
@@ -105,7 +109,8 @@ class MutationEntryMessage:
                 return OBugsError(message="Entry doesn't exist anymore.")
             db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned:
-                return OBugsError(message="Banned user.")
+                return OBugsError(message="Impossible for user to do this action.")
+
 
             state_before = {}
             state_after = {}
@@ -170,50 +175,51 @@ class MutationEntryMessage:
 
         with info.context['session_factory']() as session:
             db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
-            if db_user is None or not db_user.is_admin:
-                return OBugsError(message="User is not admin.")
             if db_user is None or db_user.is_banned:
-                return OBugsError(message="Banned user.")
+                return OBugsError(message="Impossible for user to do this action.")
 
-            db_message = session.query(EntryMessagePatch).where(
-                EntryMessagePatch.id == message_id).one_or_none()
-            if db_message is None or db_message.type != 'patch' or db_message.is_closed:
+            db_patch = session.query(EntryMessagePatch).where(EntryMessagePatch.id == message_id).one_or_none()
+            if db_patch is None or db_patch.type != 'patch' or db_patch.is_closed:
                 return OBugsError(message="Invalid patch to process.")
 
-            db_message.is_closed = True
-            db_message.accepted = accept
-            db_message.closed_at = datetime.utcnow()
-            db_message.closed_by_id = uuid.UUID(current_user)
+            if not db_user.is_admin and not db_user.is_role_on_software(SoftwareRole.CURATOR,
+                                                                        db_patch.entry.software_id):
+                return OBugsError(message="Impossible for user to do this action.")
 
-            db_message.entry.updated_at = datetime.utcnow()
+            db_patch.is_closed = True
+            db_patch.accepted = accept
+            db_patch.closed_at = datetime.utcnow()
+            db_patch.closed_by_id = uuid.UUID(current_user)
+
+            db_patch.entry.updated_at = datetime.utcnow()
             if accept:
-                state_before = json.loads(db_message.state_before)
-                state_after = json.loads(db_message.state_after)
+                state_before = json.loads(db_patch.state_before)
+                state_after = json.loads(db_patch.state_after)
                 if 'title' in state_after:
-                    db_message.entry.title = state_after['title']
+                    db_patch.entry.title = state_after['title']
                 if 'status' in state_after:
-                    db_message.entry.status = EntryStatus[state_after['status']]
+                    db_patch.entry.status = EntryStatus[state_after['status']]
                 if 'description' in state_after:
-                    db_message.entry.description = state_after['description']
+                    db_patch.entry.description = state_after['description']
                 if 'illustration' in state_after:
-                    db_message.entry.illustration = state_after['illustration']
+                    db_patch.entry.illustration = state_after['illustration']
                 if 'tags' in state_after:
                     to_remove = [item for item in state_before['tags'] if item not in state_after['tags']]
                     to_add = [item for item in state_after['tags'] if item not in state_before['tags']]
                     for tag in to_remove:
-                        db_tag = session.query(Tag).where(Tag.software_id == db_message.entry.software_id,
+                        db_tag = session.query(Tag).where(Tag.software_id == db_patch.entry.software_id,
                                                           Tag.name == tag).one_or_none()
                         if db_tag is not None:
-                            db_message.entry.tags.remove(db_tag)
+                            db_patch.entry.tags.remove(db_tag)
                     for tag in to_add:
-                        db_tag = session.query(Tag).where(Tag.software_id == db_message.entry.software_id,
+                        db_tag = session.query(Tag).where(Tag.software_id == db_patch.entry.software_id,
                                                           Tag.name == tag).one_or_none()
                         if db_tag is not None:
-                            db_message.entry.tags.append(db_tag)
+                            db_patch.entry.tags.append(db_tag)
 
-            db_message.entry.open_patches_count = session.query(EntryMessagePatch).where(
-                EntryMessagePatch.entry_id == db_message.entry.id,
+            db_patch.entry.open_patches_count = session.query(EntryMessagePatch).where(
+                EntryMessagePatch.entry_id == db_patch.entry.id,
                 EntryMessagePatch.is_closed == False).count()
             session.commit()
-
-            return ProcessPatchSuccess(entry_message=db_message, entry=db_message.entry)
+            len(db_patch.entry.tags)
+            return ProcessPatchSuccess(entry_message=db_patch, entry=db_patch.entry)

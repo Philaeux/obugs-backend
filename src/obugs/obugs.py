@@ -1,23 +1,21 @@
 import configparser
 import os
-
-import requests
-import string
 from pathlib import Path
 from secrets import choice
+import string
 
 from fastapi.middleware.cors import CORSMiddleware
-from obugs.helpers import create_jwt_token
+from pydantic import BaseModel
+import requests
 from sqlalchemy.orm import Session
-from werkzeug.security import generate_password_hash, check_password_hash
 from strawberry.fastapi import GraphQLRouter
-
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyLoader
+from werkzeug.security import generate_password_hash, check_password_hash
 
-from obugs.graphql.schema import schema
 from obugs.database.database import Database
 from obugs.database.user import User
-from pydantic import BaseModel
+from obugs.helpers import create_jwt_token
+from obugs.graphql.schema import schema
 
 
 class RegisterInfo(BaseModel):
@@ -30,12 +28,21 @@ class RegisterInfo(BaseModel):
 class LoginInfo(BaseModel):
     username: str
     password: str
+    recaptcha: str
 
 
 class Obugs:
-
     def __init__(self, app):
         self.app = app
+
+        # Config
+        self.config = configparser.ConfigParser()
+        self.config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")
+
+        # Database
+        self.database = Database(uri=self.config['Flask']['DATABASE'], check_migrations=True)
+
+        # CORS
         self.app.add_middleware(
             CORSMiddleware,
             allow_origins=["http://localhost:4200", "https://obugs.the-cluster.org"],
@@ -44,8 +51,7 @@ class Obugs:
             allow_headers=["*"]
         )
 
-        self.config = configparser.ConfigParser()
-        self.config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")
+        # MAIL
         # self.app.config['MAIL_SERVER'] = self.config['Flask']['MAIL_SERVER']
         # self.app.config['MAIL_PORT'] = 587  # Port for the email server
         # self.app.config['MAIL_USE_TLS'] = True  # Use TLS (True/False)
@@ -53,12 +59,9 @@ class Obugs:
         # self.app.config['MAIL_USERNAME'] = self.config['Flask']['MAIL_USERNAME']
         # self.app.config['MAIL_PASSWORD'] = self.config['Flask']['MAIL_PASSWORD']
         # self.app.config['MAIL_DEFAULT_SENDER'] = self.config['Flask']['MAIL_DEFAULT_SENDER']
-
-        self.database = Database(uri=self.config['Flask']['DATABASE'], check_migrations=True)
-
         # self.mail = Mail(self.app)
 
-        # Routes
+        # GraphQL
         async def get_context():
             return {
                 "config": self.config,
@@ -68,9 +71,12 @@ class Obugs:
 
         self.graphql_app = GraphQLRouter(
             schema,
+            graphiql=self.config['Flask'].getboolean('DEBUG'),
             context_getter=get_context,
         )
         self.app.include_router(self.graphql_app, prefix="/graphql")
+
+        # Register/Login/Activate routes
 
         @self.app.post('/register')
         async def register(register_info: RegisterInfo):
@@ -103,8 +109,6 @@ class Obugs:
                     is_banned=False,
                     is_activated=True
                 )
-                if register_info.username == 'Philaeux':
-                    new_user.is_admin = True
 
                 # activation_link = (f"{self.config['Flask']['OBUGS_FRONTEND']}/login?"
                 #                    f"username={username}&token={new_user.activation_token}")
@@ -116,6 +120,28 @@ class Obugs:
                 session.commit()
 
             return {'error': '', 'message': 'User registered successfully. You can login.'}
+
+        @self.app.post('/login')
+        async def login(login_info: LoginInfo):
+            try:
+                response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
+                    'secret': self.config['Flask']['RECAPTCHA'],
+                    'response': login_info.recaptcha
+                })
+                result = response.json()
+                if not result['success']:
+                    return {'error': 'Invalid recaptcha.', 'message': ''}
+            except Exception:
+                return {'error': 'Error with recaptcha check.', 'message': ''}
+
+            with Session(self.database.engine) as session:
+                user = session.query(User).filter(User.username == login_info.username).first()
+                if not user or not check_password_hash(user.password, login_info.password):
+                    return {'error': 'Invalid username or password.', 'message': ''}
+                if user.is_banned:
+                    return {'error': 'This user is banned.', 'message': ''}
+
+            return {'error': '', 'message': create_jwt_token(self.config['Flask']['JWT_SECRET_KEY'], user.id)}
 
         # @self.app.route('/activate', methods=['POST'])
         # def activate():
@@ -133,14 +159,3 @@ class Obugs:
         #         user.is_activated = True
         #         session.commit()
         #     return jsonify({'error': '', 'message': 'Account successfully activated. You can now login.'}), 200
-
-        @self.app.post('/login')
-        async def login(login_info: LoginInfo):
-            with Session(self.database.engine) as session:
-                user = session.query(User).filter(User.username == login_info.username).first()
-                if not user or not check_password_hash(user.password, login_info.password):
-                    return {'error': 'Invalid username or password.', 'message': ''}
-                if user.is_banned:
-                    return {'error': 'This user is banned.', 'message': ''}
-
-            return {'error': '', 'message': create_jwt_token(self.config['Flask']['JWT_SECRET_KEY'], user.id)}

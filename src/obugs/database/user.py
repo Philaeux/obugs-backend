@@ -23,3 +23,8 @@ class User(Base):
     votes: Mapped[List["Vote"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     roles: Mapped[List["UserSoftwareRole"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
+    def is_role_on_software(self, target_role, software_id):
+        for role in self.roles:
+            if role.software_id == software_id and role.role & target_role != 0:
+                return True
+        return False
