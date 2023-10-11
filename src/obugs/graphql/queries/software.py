@@ -1,11 +1,9 @@
-import asyncio
-
 import strawberry
 from sqlalchemy import select
 
 from obugs.database.software import Software
-from obugs.graphql.types import Software as SoftwareGQL
-
+from obugs.database.software_suggestion import SoftwareSuggestion
+from obugs.graphql.types import Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
 
 @strawberry.type
 class QuerySoftware:
@@ -17,8 +15,16 @@ class QuerySoftware:
             return db_software
 
     @strawberry.field
-    def softwares(self, info) -> list[SoftwareGQL]:
-        asyncio.get_event_loop()
+    def softwares(self, info, search: str | None) -> list[SoftwareGQL]:
         with info.context['session_factory']() as session:
-            sql = select(Software).order_by(Software.full_name)
+            sql = select(Software)
+            if search is not None:
+                sql = sql.filter(Software.full_name.ilike(f"%{search}%"))
+            sql = sql.order_by(Software.full_name)
+            return session.execute(sql).scalars().all()
+
+    @strawberry.field
+    def software_suggestions(self, info) -> list[SoftwareSuggestionGQL]:
+        with info.context['session_factory']() as session:
+            sql = select(SoftwareSuggestion).limit(50)
             return session.execute(sql).scalars().all()

@@ -17,7 +17,7 @@ class UserSoftwareRole(Base):
     __tablename__ = "user_software_role"
 
     user_id: Mapped[uuid.UUID] = mapped_column(UUID(), ForeignKey("user.id"), primary_key=True)
-    software_id: Mapped[uuid.UUID] = mapped_column(UUID(), ForeignKey("software.id"), primary_key=True)
+    software_id: Mapped[str] = mapped_column(ForeignKey("software.id"), primary_key=True)
     role: Mapped[int] = mapped_column(default=0)
 
     software: Mapped["Software"] = relationship(back_populates="user_roles")

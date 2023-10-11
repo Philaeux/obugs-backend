@@ -2,9 +2,12 @@ import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from obugs.database.entry import Entry as EntryEntity
-# from obugs.database.entity_base import EntryTag as EntryTagEntity
-from obugs.database.entry_message import EntryMessage as EntryMessageEntity, EntryMessageCreation as EntryMessageCreationEntity, EntryMessageComment as EntryMessageCommentEntity, EntryMessagePatch as EntryMessagePatchEntity
+from obugs.database.entry_message import (EntryMessage as EntryMessageEntity,
+                                          EntryMessageCreation as EntryMessageCreationEntity,
+                                          EntryMessageComment as EntryMessageCommentEntity,
+                                          EntryMessagePatch as EntryMessagePatchEntity)
 from obugs.database.software import Software as SoftwareEntity
+from obugs.database.software_suggestion import SoftwareSuggestion as SoftwareSuggestionEntity
 from obugs.database.tag import Tag as TagEntity
 from obugs.database.user import User as UserEntity
 from obugs.database.user_software_role import UserSoftwareRole as UserSoftwareRole
@@ -39,15 +42,15 @@ class EntryMessageComment:
 class EntryMessagePatch:
     pass
 
-#
-# @strawberry_sqlalchemy_mapper.type(EntryTagEntity)
-# class EntryTag:
-#     pass
-
 
 @strawberry_sqlalchemy_mapper.type(SoftwareEntity)
 class Software:
     __exclude__ = ["entries"]
+
+
+@strawberry_sqlalchemy_mapper.type(SoftwareSuggestionEntity)
+class SoftwareSuggestion:
+    pass
 
 
 @strawberry_sqlalchemy_mapper.type(TagEntity)
@@ -72,7 +75,7 @@ class Vote:
 
 # COMPOSITE TYPES
 @strawberry.type
-class MessageDeleteSuccess:
+class OperationDone:
     success: bool
 
 

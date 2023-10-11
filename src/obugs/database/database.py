@@ -16,6 +16,7 @@ from obugs.database.user_software_role import UserSoftwareRole
 from obugs.database.vote import Vote
 from obugs.database.entry_message import (EntryMessageComment, EntryMessage,
                                           EntryMessagePatch, EntryMessageCreation)
+from obugs.database.software_suggestion import SoftwareSuggestion
 
 
 class Database:

@@ -7,7 +7,8 @@ from alembic import context
 
 from obugs.database.database import (
     Base, Software, User, Tag, Entry, Vote,
-    EntryStatus, EntryMessageComment, EntryMessagePatch, EntryMessage, EntryMessageCreation, UserSoftwareRole
+    EntryStatus, EntryMessageComment, EntryMessagePatch, EntryMessage, EntryMessageCreation, UserSoftwareRole,
+    SoftwareSuggestion
 )
 
 # this is the Alembic Config object, which provides

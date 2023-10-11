@@ -11,7 +11,7 @@ from obugs.database.entry import Entry, EntryStatus
 from obugs.database.entry_message import EntryMessage, EntryMessagePatch, EntryMessageComment
 from obugs.database.user_software_role import SoftwareRole
 from obugs.database.vote import Vote
-from obugs.graphql.types import OBugsError, MessageDeleteSuccess, ProcessPatchSuccess, \
+from obugs.graphql.types import OBugsError, OperationDone, ProcessPatchSuccess, \
     EntryMessageComment as EntryMessageCommentGQL, EntryMessagePatch as EntryMessagePatchGQL
 from obugs.helpers import check_user
 
@@ -58,7 +58,7 @@ class MutationEntryMessage:
             return session.query(EntryMessageComment).where(EntryMessageComment.id == message_id).one_or_none()
 
     @strawberry.mutation
-    def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | MessageDeleteSuccess:
+    def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | OperationDone:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -83,7 +83,7 @@ class MutationEntryMessage:
 
             session.delete(to_delete)
             session.commit()
-            return MessageDeleteSuccess(success=True)
+            return OperationDone(success=True)
 
     @strawberry.mutation
     def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
