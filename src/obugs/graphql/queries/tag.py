@@ -9,7 +9,12 @@ from obugs.graphql.types import Tag as TagGQL
 class QueryTag:
 
     @strawberry.field
-    def tags(self, info, software_id: str) -> list[TagGQL]:
+    def tags(self, info, software_id: str, search: str | None) -> list[TagGQL]:
         with info.context['session_factory']() as session:
-            sql = select(Tag).where(Tag.software_id == software_id).order_by(Tag.name)
+            sql = select(Tag).where(Tag.software_id == software_id)
+
+            if search is not None:
+                sql = sql.filter(Tag.name.ilike(f"%{search}%"))
+
+            sql = sql.order_by(Tag.name)
             return session.execute(sql).scalars().all()

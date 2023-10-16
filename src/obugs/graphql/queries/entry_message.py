@@ -29,7 +29,7 @@ class QueryEntryMessage:
                 .where(EntryMessagePatch.is_closed == False)
 
             if software_id is not None:
-                sql = sql.where(EntryMessagePatch.entry.software_id == software_id)
+                sql = sql.join(EntryMessagePatch.entry).filter_by(software_id=software_id)
 
-            sql = sql.order_by(EntryMessagePatch.created_at).limit(50)
+            sql = sql.order_by(EntryMessagePatch.created_at.desc()).limit(50)
             return session.execute(sql).scalars().all()

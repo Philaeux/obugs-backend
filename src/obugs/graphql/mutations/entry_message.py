@@ -111,7 +111,6 @@ class MutationEntryMessage:
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")
 
-
             state_before = {}
             state_after = {}
             is_modified = False
@@ -157,12 +156,12 @@ class MutationEntryMessage:
                 is_closed=False
             )
             vote = Vote(subject_id=patch.id, user=db_user, rating=1)
+            session.add(patch)
+            session.add(vote)
             db_entry.updated_at = datetime.utcnow()
             db_entry.open_patches_count = session.query(EntryMessagePatch).where(
                 EntryMessagePatch.entry_id == db_entry.id,
-                EntryMessagePatch.is_closed == False).count() + 1
-            session.add(patch)
-            session.add(vote)
+                EntryMessagePatch.is_closed == False).count()
             session.commit()
 
             return session.query(EntryMessagePatch).where(EntryMessagePatch.id == patch_id).one_or_none()
