@@ -43,7 +43,7 @@ class MutationEntry:
 
             entry_id = uuid.uuid4()
             entry = Entry(id=entry_id, software_id=software_id, title=title,
-                          description=description, illustration=illustration, status=EntryStatus.NEW,
+                          description=description, illustration=illustration.strip(), status=EntryStatus.NEW,
                           rating=2, rating_total=2, rating_count=1, created_at=datetime.datetime.utcnow(),
                           updated_at=datetime.datetime.utcnow(), open_patches_count=0)
             for tag in tags:

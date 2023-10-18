@@ -131,9 +131,9 @@ class MutationEntryMessage:
                 state_before['description'] = db_entry.description
                 state_after['description'] = description
                 is_modified = True
-            if illustration != db_entry.illustration:
+            if illustration.strip() != db_entry.illustration:
                 state_before['illustration'] = db_entry.illustration
-                state_after['illustration'] = illustration
+                state_after['illustration'] = illustration.strip()
                 is_modified = True
             if set(tags_as_strings) != set(tags):
                 state_before['tags'] = tags_as_strings
