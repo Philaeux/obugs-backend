@@ -39,4 +39,4 @@ class MutationTag:
                 session.add(db_tag)
             session.commit()
             # return db_tag
-            return session.query(Tag).where(Tag.id == id).one_or_none()
+            return session.query(Tag).where(Tag.id == db_tag.id).one_or_none()
