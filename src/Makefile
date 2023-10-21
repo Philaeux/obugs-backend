@@ -11,7 +11,7 @@ win-install:
 
 ## Run the development files
 win-run:
-	.\.env\Scripts\python.exe .\main.py
+	.\.env\Scripts\uvicorn.exe obugs.obugs:app --host 0.0.0.0 --reload --port 5000
 
 ## Remove development environment
 win-clean:

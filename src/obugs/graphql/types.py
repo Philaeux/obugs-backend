@@ -60,7 +60,7 @@ class Tag:
 
 @strawberry_sqlalchemy_mapper.type(UserEntity)
 class User:
-    __exclude__ = ["password", "email", "is_activated", "activation_token"]
+    pass
 
 
 @strawberry_sqlalchemy_mapper.type(UserSoftwareRole)

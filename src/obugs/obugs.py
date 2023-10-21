@@ -1,20 +1,22 @@
 import configparser
 import os
+import uuid
 from pathlib import Path
-from secrets import choice
-import string
+from urllib.parse import quote
 
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.requests import Request
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import requests
 from sqlalchemy.orm import Session
 from strawberry.fastapi import GraphQLRouter
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyLoader
-from werkzeug.security import generate_password_hash, check_password_hash
 
 from obugs.database.database import Database
 from obugs.database.user import User
-from obugs.helpers import create_jwt_token
+from obugs.helpers import create_jwt_token, create_oauth_state, check_oauth_state
 from obugs.graphql.schema import schema
 
 
@@ -31,131 +33,105 @@ class LoginInfo(BaseModel):
     recaptcha: str
 
 
-class Obugs:
-    def __init__(self, app):
-        self.app = app
+app = FastAPI()
 
-        # Config
-        self.config = configparser.ConfigParser()
-        self.config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")
+# Config
+config = configparser.ConfigParser()
+config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")
 
-        # Database
-        self.database = Database(uri=self.config['Flask']['DATABASE'], check_migrations=True)
+# Database
+database = Database(uri=config['Flask']['DATABASE'], check_migrations=True)
 
-        # CORS
-        self.app.add_middleware(
-            CORSMiddleware,
-            allow_origins=["http://localhost:4200", "https://obugs.the-cluster.org"],
-            allow_credentials=True,
-            allow_methods=["*"],
-            allow_headers=["*"]
-        )
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://127.0.0.1:4200", "https://obugs.the-cluster.org"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
-        # MAIL
-        # self.app.config['MAIL_SERVER'] = self.config['Flask']['MAIL_SERVER']
-        # self.app.config['MAIL_PORT'] = 587  # Port for the email server
-        # self.app.config['MAIL_USE_TLS'] = True  # Use TLS (True/False)
-        # self.app.config['MAIL_USE_SSL'] = False  # Use SSL (True/False)
-        # self.app.config['MAIL_USERNAME'] = self.config['Flask']['MAIL_USERNAME']
-        # self.app.config['MAIL_PASSWORD'] = self.config['Flask']['MAIL_PASSWORD']
-        # self.app.config['MAIL_DEFAULT_SENDER'] = self.config['Flask']['MAIL_DEFAULT_SENDER']
-        # self.mail = Mail(self.app)
 
-        # GraphQL
-        async def get_context():
-            return {
-                "config": self.config,
-                "session_factory": self.database.session_factory,
-                "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=self.database.session_factory()),
-            }
+# GraphQL
+async def get_context():
+    return {
+        "config": config,
+        "session_factory": database.session_factory,
+        "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=database.session_factory()),
+    }
 
-        self.graphql_app = GraphQLRouter(
-            schema,
-            graphiql=self.config['Flask'].getboolean('DEBUG'),
-            context_getter=get_context,
-        )
-        self.app.include_router(self.graphql_app, prefix="/graphql")
 
-        # Register/Login/Activate routes
+graphql_app = GraphQLRouter(
+    schema,
+    graphiql=config['Flask'].getboolean('DEBUG'),
+    context_getter=get_context,
+)
+app.include_router(graphql_app, prefix="/graphql")
 
-        @self.app.post('/register')
-        async def register(register_info: RegisterInfo):
-            if len(register_info.username) < 3 or len(register_info.password) < 6 or len(register_info.email) < 3:
-                return {'error': 'Username or password or email invalid.', 'message': ''}
 
-            try:
-                response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                    'secret': self.config['Flask']['RECAPTCHA'],
-                    'response': register_info.recaptcha
-                })
-                result = response.json()
-                if not result['success']:
-                    return {'error': 'Invalid recaptcha.', 'message': ''}
-            except Exception:
-                return {'error': 'Error with recaptcha check.', 'message': ''}
+# Github OAUTH
+@app.get('/oauth/github/start')
+async def oauth_github_start(request: Request):
+    jwt = create_oauth_state(config['Flask']['JWT_SECRET_KEY'])
+    github_oauth_url = (f"https://github.com/login/oauth/authorize?"
+                        f"client_id={config['Flask']['GITHUB_CLIENT']}&"
+                        f"redirect_uri={config['Flask']['OBUGS_BACKEND']}/oauth/github/callback&"
+                        f"state={jwt}")
+    return RedirectResponse(url=github_oauth_url)
 
-            with Session(self.database.engine) as session:
-                if session.query(User).filter(User.username == register_info.username).first():
-                    return {'error': 'Username already used.', 'message': ''}
-                if session.query(User).filter(User.email == register_info.email).first():
-                    return {'error': 'Email already used.', 'message': ''}
 
-                new_user = User(
-                    username=register_info.username,
-                    password=generate_password_hash(register_info.password, method='scrypt'),
-                    email=register_info.email,
-                    activation_token=''.join(choice(string.ascii_letters + string.digits) for _ in range(32)),
-                    is_admin=False,
-                    is_banned=False,
-                    is_activated=True
-                )
+@app.get('/oauth/github/callback')
+async def oauth_github_callback(request: Request):
+    received_state = request.query_params.get('state')
+    github_code = request.query_params.get('code')
 
-                # activation_link = (f"{self.config['Flask']['OBUGS_FRONTEND']}/login?"
-                #                    f"username={username}&token={new_user.activation_token}")
-                # message = Message(subject="Obugs Activation Link",
-                #                   recipients=[email],
-                #                   body=f"To confirm your registration, use this link {activation_link}")
-                # self.mail.send(message)
-                session.add(new_user)
-                session.commit()
+    if not check_oauth_state(config['Flask']['JWT_SECRET_KEY'], received_state):
+        error = quote("Error with the OAuth state verification, try again.", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
 
-            return {'error': '', 'message': 'User registered successfully. You can login.'}
+    # ACCESS TOKEN
+    github_token_url = "https://github.com/login/oauth/access_token"
+    payload = {
+        "client_id": config['Flask']['GITHUB_CLIENT'],
+        "client_secret": config['Flask']['GITHUB_SECRET'],
+        "code": github_code,
+        "redirect_uri": f"{config['Flask']['OBUGS_BACKEND']}/oauth/github/callback"
+    }
+    response = requests.post(github_token_url, data=payload, headers={"Accept": "application/json"})
+    if response.status_code != 200:
+        error = quote("GitHub OAuth token exchange failed, try again.", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+    access_token = response.json()["access_token"]
 
-        @self.app.post('/login')
-        async def login(login_info: LoginInfo):
-            try:
-                response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                    'secret': self.config['Flask']['RECAPTCHA'],
-                    'response': login_info.recaptcha
-                })
-                result = response.json()
-                if not result['success']:
-                    return {'error': 'Invalid recaptcha.', 'message': ''}
-            except Exception:
-                return {'error': 'Error with recaptcha check.', 'message': ''}
+    # USER INFO
+    github_user_url = "https://api.github.com/user"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(github_user_url, headers=headers)
+    if response.status_code != 200:
+        error = quote("Failed to retrieve user information from GitHub, try again.", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
 
-            with Session(self.database.engine) as session:
-                user = session.query(User).filter(User.username == login_info.username).first()
-                if not user or not check_password_hash(user.password, login_info.password):
-                    return {'error': 'Invalid username or password.', 'message': ''}
-                if user.is_banned:
-                    return {'error': 'This user is banned.', 'message': ''}
+    user_info = response.json()
+    github_id = user_info["id"]
+    github_name = user_info["login"]
 
-            return {'error': '', 'message': create_jwt_token(self.config['Flask']['JWT_SECRET_KEY'], user.id)}
+    # JWT RESULT
+    with Session(database.engine) as session:
+        user = session.query(User).filter(User.github_id == github_id).first()
+        if not user:
+            user = User(id=uuid.uuid4(), github_id=github_id, github_name=github_name, is_admin=False,
+                        is_banned=False, username=f"{github_name}#Github")
+            session.add(user)
+            session.commit()
+        else:
+            user.github_name = github_name
+            user.username = f"{github_name}#Github"
+            session.commit()
 
-        # @self.app.route('/activate', methods=['POST'])
-        # def activate():
-        #     data = request.get_json()
-        #     username = data.get('username', '')
-        #     token = data.get('token', '')
-        #
-        #     if len(username) < 3 or len(token) != 32:
-        #         return jsonify({'error': 'Invalid user or activate token.', 'message': ''}), 200
-        #
-        #     with Session(self.database.engine) as session:
-        #         user = session.query(User).filter(User.username == username).first()
-        #         if not user or user.activation_token != token:
-        #             return jsonify({'error': 'Invalid or activate token.', 'message': ''}), 200
-        #         user.is_activated = True
-        #         session.commit()
-        #     return jsonify({'error': '', 'message': 'Account successfully activated. You can now login.'}), 200
+        if user.is_banned:
+            error = quote("This user is banned.", safe='')
+            return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+
+    jwt = create_jwt_token(config['Flask']['JWT_SECRET_KEY'], user.id)
+    escaped_jwt = quote(jwt, safe='')
+    return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?jwt={escaped_jwt}")

@@ -40,7 +40,6 @@ class MutationSoftware:
 
     @strawberry.mutation
     def suggest_software(self, info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
-
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
                 'secret': info.context['config']['Flask']['RECAPTCHA'],
