@@ -14,6 +14,8 @@ class User(Base):
 
     github_id: Mapped[int] = mapped_column(nullable=True, index=True)
     github_name: Mapped[str] = mapped_column(nullable=True)
+    reddit_id: Mapped[str] = mapped_column(nullable=True, index=True)
+    reddit_name: Mapped[str] = mapped_column(nullable=True)
 
     is_admin: Mapped[bool] = mapped_column()
     is_banned: Mapped[bool] = mapped_column()

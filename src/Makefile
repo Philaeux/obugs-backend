@@ -46,3 +46,5 @@ import-database-snapshot:
 
 create-database-snapshot:
 	sudo rsync -av --no-perms --delete --chown=$(whoami) ../../obugs_postgres_data/ ../../obugs_postgres_save
+	sudo chown -R philaeux:philaeux ../../obugs_postgres_save
+

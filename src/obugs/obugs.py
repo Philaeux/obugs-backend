@@ -1,3 +1,4 @@
+import base64
 import configparser
 import os
 import uuid
@@ -82,10 +83,10 @@ async def oauth_github_start(request: Request):
 
 @app.get('/oauth/github/callback')
 async def oauth_github_callback(request: Request):
-    received_state = request.query_params.get('state')
-    github_code = request.query_params.get('code')
+    state = request.query_params.get('state')
+    code = request.query_params.get('code')
 
-    if not check_oauth_state(config['Flask']['JWT_SECRET_KEY'], received_state):
+    if not check_oauth_state(config['Flask']['JWT_SECRET_KEY'], state):
         error = quote("Error with the OAuth state verification, try again.", safe='')
         return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
 
@@ -94,7 +95,7 @@ async def oauth_github_callback(request: Request):
     payload = {
         "client_id": config['Flask']['GITHUB_CLIENT'],
         "client_secret": config['Flask']['GITHUB_SECRET'],
-        "code": github_code,
+        "code": code,
         "redirect_uri": f"{config['Flask']['OBUGS_BACKEND']}/oauth/github/callback"
     }
     response = requests.post(github_token_url, data=payload, headers={"Accept": "application/json"})
@@ -126,6 +127,96 @@ async def oauth_github_callback(request: Request):
         else:
             user.github_name = github_name
             user.username = f"{github_name}#Github"
+            session.commit()
+
+        if user.is_banned:
+            error = quote("This user is banned.", safe='')
+            return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+
+    jwt = create_jwt_token(config['Flask']['JWT_SECRET_KEY'], user.id)
+    escaped_jwt = quote(jwt, safe='')
+    return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?jwt={escaped_jwt}")
+
+
+# Reddit OAUTH
+@app.get('/oauth/reddit/start')
+async def oauth_reddit_start(request: Request):
+    jwt = create_oauth_state(config['Flask']['JWT_SECRET_KEY'])
+    reddit_oauth_url = (f"https://www.reddit.com/api/v1/authorize?response_type=code&duration=temporary&"
+                        f"client_id={config['Flask']['REDDIT_CLIENT']}&"
+                        f"redirect_uri={config['Flask']['OBUGS_BACKEND']}/oauth/reddit/callback&"
+                        f"state={jwt}&"
+                        f"scope=identity")
+    return RedirectResponse(url=reddit_oauth_url)
+
+
+@app.get('/oauth/reddit/callback')
+async def oauth_reddit_callback(request: Request):
+    error = request.query_params.get('error')
+    state = request.query_params.get('state')
+    code = request.query_params.get('code')
+
+    if error is not None:
+        error = quote(f"Error login with Reddit: '{error}'", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+
+    if not check_oauth_state(config['Flask']['JWT_SECRET_KEY'], state):
+        error = quote("Error with the OAuth state verification, try again.", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+
+    # ACCESS TOKEN
+    reddit_token_url = "https://www.reddit.com/api/v1/access_token"
+    payload = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": f"{config['Flask']['OBUGS_BACKEND']}/oauth/reddit/callback"
+    }
+    credentials = f"{config['Flask']['REDDIT_CLIENT']}:{config['Flask']['REDDIT_SECRET']}".encode("utf-8")
+    headers = {
+        "Accept": "application/json",
+        "Authorization": "Basic " + base64.b64encode(credentials).decode("utf-8"),
+        'User-Agent': 'oBugs/1.0 (by /u/philaeux)'
+    }
+    response = requests.post(reddit_token_url, data=payload, headers=headers)
+    if response.status_code != 200:
+        error = quote("Reddit OAuth token exchange failed, try again.", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+    access_token = response.json()["access_token"]
+
+    # USER INFO
+    reddit_user_url = "https://oauth.reddit.com/api/v1/me"
+    headers = {
+        "Accept": "application/json",
+        "Authorization": f"Bearer {access_token}",
+        'User-Agent': 'oBugs/1.0 (by /u/philaeux)'
+    }
+    response = requests.get(reddit_user_url, headers=headers)
+    if response.status_code != 200:
+        error = quote("Failed to retrieve user information from Reddit, try again.", safe='')
+        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+
+    user_info = response.json()
+    reddit_id = user_info["id"]
+    reddit_name = user_info["name"]
+
+    # Revoke access token
+    payload = {
+        "token": access_token,
+        "token_type_hint": access_token
+    }
+    requests.post("https://www.reddit.com/api/v1/revoke_token", data=payload, headers=headers)
+
+    # JWT RESULT
+    with Session(database.engine) as session:
+        user = session.query(User).filter(User.reddit_id == reddit_id).first()
+        if not user:
+            user = User(id=uuid.uuid4(), reddit_id=reddit_id, reddit_name=reddit_name, is_admin=False,
+                        is_banned=False, username=f"{reddit_name}#Reddit")
+            session.add(user)
+            session.commit()
+        else:
+            user.reddit_name = reddit_name
+            user.username = f"{reddit_name}#Github"
             session.commit()
 
         if user.is_banned:
