@@ -11,7 +11,7 @@ from obugs.helpers import check_user
 class QueryUser:
 
     @strawberry.field
-    def current_user(self, info) -> OBugsError | UserGQL:
+    async def current_user(self, info) -> OBugsError | UserGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -25,7 +25,7 @@ class QueryUser:
             return db_user
 
     @strawberry.field
-    def user(self, info, user_id: uuid.UUID) -> UserGQL | None:
+    async def user(self, info, user_id: uuid.UUID) -> UserGQL | None:
         with info.context['session_factory']() as session:
             db_user = session.query(User).where(User.id == user_id).one_or_none()
             return db_user

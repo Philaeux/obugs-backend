@@ -13,7 +13,8 @@ from obugs.graphql.types import EntryMessagePatch as EntryMessagePatchGQL, \
 class QueryEntryMessage:
 
     @strawberry.field
-    def entry_messages(self, info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) -> list[EntryMessagePatchGQL | EntryMessageCommentGQL | EntryMessageCreationQGL]:
+    async def entry_messages(self, info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) \
+            -> list[EntryMessagePatchGQL | EntryMessageCommentGQL | EntryMessageCreationQGL]:
         with info.context['session_factory']() as session:
             sql = select(EntryMessage) \
                 .where(EntryMessage.entry_id == entry_id) \
@@ -23,7 +24,7 @@ class QueryEntryMessage:
             return db_messages
 
     @strawberry.field
-    def open_patches(self, info, software_id: str | None) -> list[EntryMessagePatchGQL]:
+    async def open_patches(self, info, software_id: str | None) -> list[EntryMessagePatchGQL]:
         with info.context['session_factory']() as session:
             sql = select(EntryMessagePatch) \
                 .where(EntryMessagePatch.is_closed == False)

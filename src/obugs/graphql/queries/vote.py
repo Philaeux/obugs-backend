@@ -11,7 +11,7 @@ from obugs.helpers import check_user
 class QueryVote:
 
     @strawberry.field
-    def my_vote(self, info, subject_id: uuid.UUID) -> VoteGQL | None:
+    async def my_vote(self, info, subject_id: uuid.UUID) -> VoteGQL | None:
         current_user = check_user(info.context)
         if current_user is None:
             return None

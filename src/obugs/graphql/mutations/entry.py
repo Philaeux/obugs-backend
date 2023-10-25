@@ -19,7 +19,7 @@ from obugs.graphql.types import OBugsError, Entry as EntryGQL
 class MutationEntry:
 
     @strawberry.mutation
-    def create_entry(self, info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
+    async def create_entry(self, info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
                      illustration: str) -> OBugsError | EntryGQL:
         current_user = check_user(info.context)
         if current_user is None:
@@ -65,4 +65,4 @@ class MutationEntry:
             session.add(vote)
             session.add(message)
             session.commit()
-            return session.query(Entry).where(Entry.id == entry_id).one_or_none()
+            return entry

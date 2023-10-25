@@ -9,7 +9,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
 import requests
 from sqlalchemy.orm import Session
 from strawberry.fastapi import GraphQLRouter
@@ -20,20 +19,7 @@ from obugs.database.user import User
 from obugs.helpers import create_jwt_token, create_oauth_state, check_oauth_state
 from obugs.graphql.schema import schema
 
-
-class RegisterInfo(BaseModel):
-    username: str
-    password: str
-    email: str
-    recaptcha: str
-
-
-class LoginInfo(BaseModel):
-    username: str
-    password: str
-    recaptcha: str
-
-
+# App
 app = FastAPI()
 
 # Config
@@ -41,7 +27,7 @@ config = configparser.ConfigParser()
 config.read(Path(os.path.dirname(__file__)) / ".." / "obugs.ini")
 
 # Database
-database = Database(uri=config['Flask']['DATABASE'], check_migrations=True)
+database = Database(uri=config['Default']['DATABASE'], check_migrations=True)
 
 # CORS
 app.add_middleware(
@@ -64,44 +50,45 @@ async def get_context():
 
 graphql_app = GraphQLRouter(
     schema,
-    graphiql=config['Flask'].getboolean('DEBUG'),
+    graphiql=config['Default'].getboolean('DEBUG'),
     context_getter=get_context,
 )
 app.include_router(graphql_app, prefix="/graphql")
 
 
-# Github OAUTH
 @app.get('/oauth/github/start')
 async def oauth_github_start(request: Request):
-    jwt = create_oauth_state(config['Flask']['JWT_SECRET_KEY'])
+    """Start the GitHub OAUTH process. Prepare a state to check cross call then redirect."""
+    jwt = create_oauth_state(config['Default']['JWT_SECRET_KEY'])
     github_oauth_url = (f"https://github.com/login/oauth/authorize?"
-                        f"client_id={config['Flask']['GITHUB_CLIENT']}&"
-                        f"redirect_uri={config['Flask']['OBUGS_BACKEND']}/oauth/github/callback&"
+                        f"client_id={config['Default']['GITHUB_CLIENT']}&"
+                        f"redirect_uri={config['Default']['OBUGS_BACKEND']}/oauth/github/callback&"
                         f"state={jwt}")
     return RedirectResponse(url=github_oauth_url)
 
 
 @app.get('/oauth/github/callback')
 async def oauth_github_callback(request: Request):
+    """Callback of the GitHub OAUTH. Check code and state, log the user, then redirect to frontend."""
     state = request.query_params.get('state')
     code = request.query_params.get('code')
 
-    if not check_oauth_state(config['Flask']['JWT_SECRET_KEY'], state):
+    if not check_oauth_state(config['Default']['JWT_SECRET_KEY'], state):
         error = quote("Error with the OAuth state verification, try again.", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
     # ACCESS TOKEN
     github_token_url = "https://github.com/login/oauth/access_token"
     payload = {
-        "client_id": config['Flask']['GITHUB_CLIENT'],
-        "client_secret": config['Flask']['GITHUB_SECRET'],
+        "client_id": config['Default']['GITHUB_CLIENT'],
+        "client_secret": config['Default']['GITHUB_SECRET'],
         "code": code,
-        "redirect_uri": f"{config['Flask']['OBUGS_BACKEND']}/oauth/github/callback"
+        "redirect_uri": f"{config['Default']['OBUGS_BACKEND']}/oauth/github/callback"
     }
     response = requests.post(github_token_url, data=payload, headers={"Accept": "application/json"})
     if response.status_code != 200:
         error = quote("GitHub OAuth token exchange failed, try again.", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
     access_token = response.json()["access_token"]
 
     # USER INFO
@@ -110,7 +97,7 @@ async def oauth_github_callback(request: Request):
     response = requests.get(github_user_url, headers=headers)
     if response.status_code != 200:
         error = quote("Failed to retrieve user information from GitHub, try again.", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
     user_info = response.json()
     github_id = user_info["id"]
@@ -131,20 +118,20 @@ async def oauth_github_callback(request: Request):
 
         if user.is_banned:
             error = quote("This user is banned.", safe='')
-            return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+            return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
-    jwt = create_jwt_token(config['Flask']['JWT_SECRET_KEY'], user.id)
+    jwt = create_jwt_token(config['Default']['JWT_SECRET_KEY'], user.id)
     escaped_jwt = quote(jwt, safe='')
-    return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?jwt={escaped_jwt}")
+    return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?jwt={escaped_jwt}")
 
 
-# Reddit OAUTH
 @app.get('/oauth/reddit/start')
 async def oauth_reddit_start(request: Request):
-    jwt = create_oauth_state(config['Flask']['JWT_SECRET_KEY'])
+    """Start the Reddit OAUTH process. Prepare a state to check cross call then redirect."""
+    jwt = create_oauth_state(config['Default']['JWT_SECRET_KEY'])
     reddit_oauth_url = (f"https://www.reddit.com/api/v1/authorize?response_type=code&duration=temporary&"
-                        f"client_id={config['Flask']['REDDIT_CLIENT']}&"
-                        f"redirect_uri={config['Flask']['OBUGS_BACKEND']}/oauth/reddit/callback&"
+                        f"client_id={config['Default']['REDDIT_CLIENT']}&"
+                        f"redirect_uri={config['Default']['OBUGS_BACKEND']}/oauth/reddit/callback&"
                         f"state={jwt}&"
                         f"scope=identity")
     return RedirectResponse(url=reddit_oauth_url)
@@ -152,26 +139,27 @@ async def oauth_reddit_start(request: Request):
 
 @app.get('/oauth/reddit/callback')
 async def oauth_reddit_callback(request: Request):
+    """Callback of the Reddit OAUTH. Check code and state, log the user, then redirect to frontend."""
     error = request.query_params.get('error')
     state = request.query_params.get('state')
     code = request.query_params.get('code')
 
     if error is not None:
         error = quote(f"Error login with Reddit: '{error}'", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
-    if not check_oauth_state(config['Flask']['JWT_SECRET_KEY'], state):
+    if not check_oauth_state(config['Default']['JWT_SECRET_KEY'], state):
         error = quote("Error with the OAuth state verification, try again.", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
     # ACCESS TOKEN
     reddit_token_url = "https://www.reddit.com/api/v1/access_token"
     payload = {
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": f"{config['Flask']['OBUGS_BACKEND']}/oauth/reddit/callback"
+        "redirect_uri": f"{config['Default']['OBUGS_BACKEND']}/oauth/reddit/callback"
     }
-    credentials = f"{config['Flask']['REDDIT_CLIENT']}:{config['Flask']['REDDIT_SECRET']}".encode("utf-8")
+    credentials = f"{config['Default']['REDDIT_CLIENT']}:{config['Default']['REDDIT_SECRET']}".encode("utf-8")
     headers = {
         "Accept": "application/json",
         "Authorization": "Basic " + base64.b64encode(credentials).decode("utf-8"),
@@ -180,7 +168,7 @@ async def oauth_reddit_callback(request: Request):
     response = requests.post(reddit_token_url, data=payload, headers=headers)
     if response.status_code != 200:
         error = quote("Reddit OAuth token exchange failed, try again.", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
     access_token = response.json()["access_token"]
 
     # USER INFO
@@ -193,7 +181,7 @@ async def oauth_reddit_callback(request: Request):
     response = requests.get(reddit_user_url, headers=headers)
     if response.status_code != 200:
         error = quote("Failed to retrieve user information from Reddit, try again.", safe='')
-        return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+        return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
     user_info = response.json()
     reddit_id = user_info["id"]
@@ -221,8 +209,8 @@ async def oauth_reddit_callback(request: Request):
 
         if user.is_banned:
             error = quote("This user is banned.", safe='')
-            return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?error={error}")
+            return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?error={error}")
 
-    jwt = create_jwt_token(config['Flask']['JWT_SECRET_KEY'], user.id)
+    jwt = create_jwt_token(config['Default']['JWT_SECRET_KEY'], user.id)
     escaped_jwt = quote(jwt, safe='')
-    return RedirectResponse(url=f"{config['Flask']['OBUGS_FRONTEND']}/login?jwt={escaped_jwt}")
+    return RedirectResponse(url=f"{config['Default']['OBUGS_FRONTEND']}/login?jwt={escaped_jwt}")

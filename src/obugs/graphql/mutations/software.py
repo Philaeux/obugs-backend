@@ -15,8 +15,8 @@ from obugs.helpers import check_user
 class MutationSoftware:
 
     @strawberry.mutation
-    def upsert_software(self, info, id: str, full_name: str, editor: str, description: str,
-                        language: str) -> OBugsError | SoftwareGQL:
+    async def upsert_software(self, info, id: str, full_name: str, editor: str, description: str,
+                              language: str) -> OBugsError | SoftwareGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -35,11 +35,10 @@ class MutationSoftware:
             db_software.description = description
             db_software.language = language
             session.commit()
-            #return db_software
-            return session.query(Software).where(Software.id == id).one_or_none()
+            return db_software
 
     @strawberry.mutation
-    def suggest_software(self, info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
+    async def suggest_software(self, info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
                 'secret': info.context['config']['Flask']['RECAPTCHA'],
@@ -56,11 +55,10 @@ class MutationSoftware:
             session.add(db_suggestion)
             session.commit()
 
-            # return db_suggestion
-            return session.query(SoftwareSuggestion).where(SoftwareSuggestion.id == db_suggestion.id).one_or_none()
+            return db_suggestion
 
     @strawberry.mutation
-    def delete_suggestion(self, info, suggestion_id: uuid.UUID) -> OBugsError | OperationDone:
+    async def delete_suggestion(self, info, suggestion_id: uuid.UUID) -> OBugsError | OperationDone:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")

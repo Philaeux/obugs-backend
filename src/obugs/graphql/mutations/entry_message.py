@@ -20,7 +20,7 @@ from obugs.helpers import check_user
 class MutationEntryMessage:
 
     @strawberry.mutation
-    def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID,
+    async def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID,
                       comment: str) -> OBugsError | EntryMessageCommentGQL:
         current_user = check_user(info.context)
         if current_user is None:
@@ -55,10 +55,10 @@ class MutationEntryMessage:
             session.add(message)
             db_entry.updated_at = datetime.utcnow()
             session.commit()
-            return session.query(EntryMessageComment).where(EntryMessageComment.id == message_id).one_or_none()
+            return db_entry
 
     @strawberry.mutation
-    def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | OperationDone:
+    async def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | OperationDone:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -86,7 +86,7 @@ class MutationEntryMessage:
             return OperationDone(success=True)
 
     @strawberry.mutation
-    def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
+    async def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
                      description: str, illustration: str) -> OBugsError | EntryMessagePatchGQL:
         current_user = check_user(info.context)
         if current_user is None:
@@ -164,10 +164,10 @@ class MutationEntryMessage:
                 EntryMessagePatch.is_closed == False).count()
             session.commit()
 
-            return session.query(EntryMessagePatch).where(EntryMessagePatch.id == patch_id).one_or_none()
+            return db_entry
 
     @strawberry.mutation
-    def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
+    async def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -220,5 +220,4 @@ class MutationEntryMessage:
                 EntryMessagePatch.entry_id == db_patch.entry.id,
                 EntryMessagePatch.is_closed == False).count()
             session.commit()
-            len(db_patch.entry.tags)
             return ProcessPatchSuccess(entry_message=db_patch, entry=db_patch.entry)

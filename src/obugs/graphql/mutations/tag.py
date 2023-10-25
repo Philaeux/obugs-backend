@@ -12,7 +12,8 @@ from obugs.helpers import check_user
 class MutationTag:
 
     @strawberry.mutation
-    def upsert_tag(self, info, id: uuid.UUID | None, software_id: str, name: str, font_color: str, background_color: str) -> OBugsError | TagGQL:
+    async def upsert_tag(self, info, id: uuid.UUID | None, software_id: str, name: str, font_color: str,
+                         background_color: str) -> OBugsError | TagGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -38,5 +39,4 @@ class MutationTag:
                 db_tag = Tag(id=uuid.uuid4(), software_id=software_id, name=name, font_color=font_color, background_color=background_color)
                 session.add(db_tag)
             session.commit()
-            # return db_tag
-            return session.query(Tag).where(Tag.id == db_tag.id).one_or_none()
+            return db_tag

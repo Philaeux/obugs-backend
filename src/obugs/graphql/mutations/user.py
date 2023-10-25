@@ -10,7 +10,7 @@ from obugs.helpers import check_user
 class MutationUser:
 
     @strawberry.mutation
-    def ban_user(self, info, user_id: uuid.UUID, ban: bool) -> OBugsError | UserGQL:
+    async def ban_user(self, info, user_id: uuid.UUID, ban: bool) -> OBugsError | UserGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -28,5 +28,4 @@ class MutationUser:
 
             to_ban.is_banned = ban
             session.commit()
-            #return to_ban
-            return session.query(User).where(User.id == user_id).one_or_none()
+            return to_ban
