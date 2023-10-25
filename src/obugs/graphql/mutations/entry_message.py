@@ -220,4 +220,5 @@ class MutationEntryMessage:
                 EntryMessagePatch.entry_id == db_patch.entry.id,
                 EntryMessagePatch.is_closed == False).count()
             session.commit()
+            len(db_patch.entry.tags)
             return ProcessPatchSuccess(entry_message=db_patch, entry=db_patch.entry)

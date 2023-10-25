@@ -15,6 +15,7 @@ class QueryEntry:
     async def entry(self, info, entry_id: uuid.UUID) -> EntryGQL | None:
         with info.context['session_factory']() as session:
             db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
+            len(db_entry.tags)
             return db_entry
 
     @strawberry.field
@@ -39,4 +40,6 @@ class QueryEntry:
             sql = sql.offset(offset).limit(limit)
 
             db_entries = session.execute(sql).scalars().all()
+            for entry in db_entries:
+                len(entry.tags)
             return db_entries
