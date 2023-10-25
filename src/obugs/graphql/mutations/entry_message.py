@@ -28,7 +28,7 @@ class MutationEntryMessage:
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['config']['Flask']['RECAPTCHA'],
+                'secret': info.context['config']['Default']['RECAPTCHA'],
                 'response': recaptcha
             })
             result = response.json()
@@ -94,7 +94,7 @@ class MutationEntryMessage:
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['config']['Flask']['RECAPTCHA'],
+                'secret': info.context['config']['Default']['RECAPTCHA'],
                 'response': recaptcha
             })
             result = response.json()

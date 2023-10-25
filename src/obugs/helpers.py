@@ -45,7 +45,7 @@ def check_user(context):
         token = authorization_header.split("Bearer ")[1]
 
         try:
-            payload = jwt.decode(token, context["config"]['Flask']['JWT_SECRET_KEY'], algorithms="HS256")
+            payload = jwt.decode(token, context["config"]['Default']['JWT_SECRET_KEY'], algorithms="HS256")
             user_id = payload.get("sub")
             return user_id
         except JWTError:
