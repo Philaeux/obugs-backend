@@ -1,4 +1,4 @@
 #!/bin/bash
 
 git pull
-docker compose up --build -d
+docker compose --env-file docker.env up --build -d
