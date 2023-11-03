@@ -40,7 +40,7 @@ class MutationEntryMessage:
         if comment == '':
             return OBugsError(message="Empty comment")
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
@@ -56,8 +56,7 @@ class MutationEntryMessage:
             db_entry.updated_at = datetime.utcnow()
             session.commit()
 
-            # we would like to 'return message' but it bugs
-            return session.query(EntryMessageComment).where(EntryMessageComment.id == message_id).one_or_none()
+            return message
 
     @strawberry.mutation
     async def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | OperationDone:
@@ -65,7 +64,7 @@ class MutationEntryMessage:
         if current_user is None:
             return OBugsError(message="Not logged client")
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")
@@ -105,7 +104,7 @@ class MutationEntryMessage:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             if db_entry is None:
                 return OBugsError(message="Entry doesn't exist anymore.")
@@ -166,8 +165,7 @@ class MutationEntryMessage:
                 EntryMessagePatch.is_closed == False).count()
             session.commit()
 
-            # we would like to 'return patch' but it bugs
-            return session.query(EntryMessagePatch).where(EntryMessagePatch.id == patch_id).one_or_none()
+            return patch
 
     @strawberry.mutation
     async def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
@@ -175,7 +173,7 @@ class MutationEntryMessage:
         if current_user is None:
             return OBugsError(message="Not logged client")
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned:
                 return OBugsError(message="Impossible for user to do this action.")

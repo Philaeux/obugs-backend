@@ -21,7 +21,7 @@ class MutationSoftware:
         if current_user is None:
             return OBugsError(message="Not logged client")
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_user = session.query(User).where(User.id == UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned or not db_user.is_admin:
                 return OBugsError(message="Mutation not allowed for this user.")
@@ -50,7 +50,7 @@ class MutationSoftware:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_suggestion = SoftwareSuggestion(id=uuid.uuid4(), name=name, description=description)
             session.add(db_suggestion)
             session.commit()
@@ -63,7 +63,7 @@ class MutationSoftware:
         if current_user is None:
             return OBugsError(message="Not logged client")
 
-        with info.context['session_factory']() as session:
+        with info.context['session_factory'](expire_on_commit=False) as session:
             db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
             if db_user is None or db_user.is_banned or not db_user.is_admin:
                 return OBugsError(message="Impossible for user to do this action.")
