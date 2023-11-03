@@ -29,5 +29,4 @@ class Query(QueryEntry, QueryEntryMessage, QuerySoftware, QueryTag, QueryUser, Q
 
 strawberry_sqlalchemy_mapper.finalize()
 additional_types = list(strawberry_sqlalchemy_mapper.mapped_types.values())
-
 schema = strawberry.Schema(query=Query, mutation=Mutation, types=additional_types)

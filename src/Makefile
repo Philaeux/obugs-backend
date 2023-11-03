@@ -10,8 +10,11 @@ win-install:
 	"$(get-location)" > .\.env\Lib\site-packages\obugs.pth
 
 ## Run the development files
-win-run:
+win-dev:
 	.\.env\Scripts\uvicorn.exe obugs.obugs:app --host 0.0.0.0 --reload --port 5000
+
+win-run:
+	.\.env\Scripts\python.exe main.py
 
 ## Remove development environment
 win-clean:

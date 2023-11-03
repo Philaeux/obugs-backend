@@ -20,8 +20,8 @@ from obugs.helpers import check_user
 class MutationEntryMessage:
 
     @strawberry.mutation
-    async def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID,
-                      comment: str) -> OBugsError | EntryMessageCommentGQL:
+    async def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID, comment: str) \
+            -> OBugsError | EntryMessageCommentGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -55,7 +55,9 @@ class MutationEntryMessage:
             session.add(message)
             db_entry.updated_at = datetime.utcnow()
             session.commit()
-            return db_entry
+
+            # we would like to 'return message' but it bugs
+            return session.query(EntryMessageComment).where(EntryMessageComment.id == message_id).one_or_none()
 
     @strawberry.mutation
     async def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | OperationDone:
@@ -164,7 +166,8 @@ class MutationEntryMessage:
                 EntryMessagePatch.is_closed == False).count()
             session.commit()
 
-            return db_entry
+            # we would like to 'return patch' but it bugs
+            return session.query(EntryMessagePatch).where(EntryMessagePatch.id == patch_id).one_or_none()
 
     @strawberry.mutation
     async def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:

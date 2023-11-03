@@ -24,6 +24,11 @@ class Entry:
 
 
 @strawberry_sqlalchemy_mapper.interface(EntryMessageEntity)
+class EntryMessageInterface:
+    pass
+
+
+@strawberry_sqlalchemy_mapper.type(EntryMessageEntity)
 class EntryMessage:
     pass
 
