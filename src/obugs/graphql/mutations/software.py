@@ -50,8 +50,12 @@ class MutationSoftware:
         except Exception:
             return OBugsError(message='Problem while checking recaptcha.')
 
+        current_user = check_user(info.context)
+        if current_user is None:
+            return OBugsError(message="Not logged client")
+
         with info.context['session_factory'](expire_on_commit=False) as session:
-            db_suggestion = SoftwareSuggestion(id=uuid.uuid4(), name=name, description=description)
+            db_suggestion = SoftwareSuggestion(id=uuid.uuid4(), user_id=current_user, name=name, description=description)
             session.add(db_suggestion)
             session.commit()
 
