@@ -51,7 +51,7 @@ app.include_router(graphql_app, prefix="/graphql")
 
 
 @app.get('/oauth/github/start')
-async def oauth_github_start(request: Request):
+async def oauth_github_start():
     """Start the GitHub OAUTH process. Prepare a state to check cross call then redirect."""
     jwt = create_oauth_state(cfg['Default']['JWT_SECRET_KEY'])
     github_oauth_url = (f"https://github.com/login/oauth/authorize?"
@@ -120,7 +120,7 @@ async def oauth_github_callback(request: Request):
 
 
 @app.get('/oauth/reddit/start')
-async def oauth_reddit_start(request: Request):
+async def oauth_reddit_start():
     """Start the Reddit OAUTH process. Prepare a state to check cross call then redirect."""
     jwt = create_oauth_state(cfg['Default']['JWT_SECRET_KEY'])
     reddit_oauth_url = (f"https://www.reddit.com/api/v1/authorize?response_type=code&duration=temporary&"

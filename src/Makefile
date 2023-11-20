@@ -1,53 +1,12 @@
-#######################################
-#        Windows environment          #
-#######################################
-
-## Create a virtual environment and install dependencies
-win-install:
-	python -m venv .env
-	.\.env\Scripts\python.exe -m pip install --upgrade pip
-	.\.env\Scripts\python.exe -m pip install -r .\requirements.txt
-	"$(get-location)" > .\.env\Lib\site-packages\obugs.pth
-
-## Run the development files
-win-dev:
-	.\.env\Scripts\uvicorn.exe obugs.obugs:app --host 0.0.0.0 --reload --port 5000
-
-win-run:
-	.\.env\Scripts\python.exe main.py
-
-## Remove development environment
-win-clean:
-	rm -r .\.env\
-
 # Generate database migrations
 win-gen-migrations:
 	.\.env\Scripts\alembic.exe revision --autogenerate
 
-
-#######################################
-#          Unix environment           #
-#######################################
-
-## Create a virtual environment and install dependencies
-unix-install:
-	python3 -m venv .venv
-	.venv/bin/pip3 install --upgrade pip
-	.venv/bin/pip3 install -r requirements.txt
-	$(foreach dir, $(wildcard .venv/lib/*), echo $(shell pwd) > $(dir)/site-packages/obugs.pth &&) echo
-
-## Run the development files
-unix-run:
-	.venv/bin/python3 ./main.py
-
-## Remove development environment
-unix-clean:
-	rm -rf .venv
-
+# Import docker database to work locally
 import-database-snapshot:
 	sudo rsync -avz --stats --delete philaeux@luna.the-cluster.org:~/obugs_postgres_save/ ../../obugs_postgres_data
 
 create-database-snapshot:
 	sudo rsync -av --no-perms --delete --chown=$(whoami) ../../obugs_postgres_data/ ../../obugs_postgres_save
-	sudo chown -R philaeux:philaeux ../../obugs_postgres_save
+	sudo chown -R $(whoami):$(whoami) ../../obugs_postgres_save
 
