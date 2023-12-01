@@ -45,7 +45,7 @@ class MutationEntry:
             entry = Entry(id=entry_id, software_id=software_id, title=title,
                           description=description, illustration=illustration.strip(), status=EntryStatus.NEW,
                           rating=2, rating_total=2, rating_count=1, created_at=datetime.datetime.utcnow(),
-                          updated_at=datetime.datetime.utcnow(), open_patches_count=0)
+                          updated_at=datetime.datetime.utcnow(), open_patches_count=0, comment_count=0)
             for tag in tags:
                 tag_entity = session.query(Tag).where(Tag.software_id == software_id,
                                                       Tag.name == tag).one_or_none()

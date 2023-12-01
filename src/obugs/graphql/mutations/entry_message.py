@@ -54,6 +54,8 @@ class MutationEntryMessage:
                                           comment=comment)
             session.add(message)
             db_entry.updated_at = datetime.utcnow()
+            db_entry.comment_count = session.query(EntryMessageComment).where(
+                EntryMessageComment.entry_id == db_entry.id).count()
             session.commit()
 
             return message
@@ -80,7 +82,11 @@ class MutationEntryMessage:
                 for vote in session.query(Vote).where(Vote.subject_id == to_delete.id):
                     session.delete(vote)
                 to_delete.entry.open_patches_count = session.query(EntryMessagePatch).where(
+                    EntryMessagePatch.entry == to_delete.entry,
                     EntryMessagePatch.is_closed is False).count()
+            if to_delete.type == 'comment':
+                to_delete.entry.comment_count = session.query(EntryMessageComment).where(
+                    EntryMessageComment.entry == to_delete.entry).count()
 
             session.delete(to_delete)
             session.commit()

@@ -38,6 +38,7 @@ class Entry(Base):
     created_at: Mapped[datetime] = mapped_column()
     updated_at: Mapped[datetime] = mapped_column()
     open_patches_count: Mapped[int] = mapped_column(default=0)
+    comment_count: Mapped[int] = mapped_column(default=0)
 
     software: Mapped["Software"] = relationship(back_populates="entries")
     tags: Mapped[List["Tag"]] = relationship(secondary=association_tags_entries)
