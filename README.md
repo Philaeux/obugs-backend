@@ -1,6 +1,7 @@
 # oBugs Backend
 
 Technologies
+* Poetry dependencies
 * Docker deployment
 * Postgresql database
 * SQLAlchemy ORM
@@ -14,47 +15,50 @@ Technologies
 - Create `./docker.env` file with as structure similar to `./docker.example.env`
 - Create `./src/settings.ini` file with a structure similar to `./src/settings.example.ini`
 
-## Prod
-
-Use the `deploy.sh` script to get the latest version of code and refresh the docker containers.
-
 ## Dev
 
-- Set the database similar to prod using a docker container
-
-```docker compose -f docker-compose-dev.yaml --env-file docker.env up postgres```
-
-
-### Virtual environment
-
-In `./src/`, set your virtual environment according to your machine:
-
-#### Windows Python
+If you wish to use docker-postgresql in dev, set it to something similar to the production:
 
 ```
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install --upgrade pip
-.\.venv\Scripts\python.exe -m pip install -r .\requirements.txt
-"$(get-location)" > .\.venv\Lib\site-packages\obugs.pth
+cd docker
+docker compose -f docker-compose-dev.yaml --env-file docker.env up postgres
 ```
 
-#### Unix Python
+To run the code, use poetry:
 
 ```
-python3 -m venv .venv
-.venv/bin/pip3 install --upgrade pip
-.venv/bin/pip3 install -r requirements.txt
-$(foreach dir, $(wildcard .venv/lib/*), echo $(shell pwd) > $(dir)/site-packages/obugs.pth &&) echo
+# Make sure you have poetry
+python -m pip install pipx
+python -m pipx install poetry
+# Install dependencies
+poetry install --with docs --no-root
+# Get information about the venv (to setup in your ide)
+poetry env info
+# Run
+cd src
+poetry run python main.py
+# If you want to remove your venv associated
+poetry env remove python
 ```
 
-### Run
+To generate a new database migration, use alembic:
 
-- Windows: ``.\.venv\Scripts\python.exe main.py``
-- Unix: ``.venv/bin/python3 ./main.py``
+```
+poetry run alembic revision --autogenerate
+```
 
-### Generate a new database migration
+To build the docs:
 
-- Windows: ``.\.venv\Scripts\alembic.exe revision --autogenerate``
-- Unix: ``.venv/bin/alembic revision --autogenerate``
+```
+cd docs
+poetry run sphinx-build . _build
+```
 
-More scripts in ``./src/Makefile``
+## Prod
+
+Use the `deploy.sh` script to get the latest version of code and refresh the docker containers:
+
+```
+cd docker
+./deploy.sh
+```

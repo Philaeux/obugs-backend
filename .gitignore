@@ -1,8 +1,8 @@
 # Project
 src/obugs.ini
 src/obugs/database/sqlite.db
-postgres_data
-docker.env
+docker/docker.env
+docs/_
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
