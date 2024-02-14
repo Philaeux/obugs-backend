@@ -5,7 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import with_polymorphic
 
 from obugs.database.entry_message import EntryMessage, EntryMessagePatch
-from obugs.graphql.types import EntryMessagePatch as EntryMessagePatchGQL, \
+from obugs.graphql.types.generated import EntryMessagePatch as EntryMessagePatchGQL, \
     EntryMessageComment as EntryMessageCommentGQL, EntryMessageCreation as EntryMessageCreationQGL
 
 

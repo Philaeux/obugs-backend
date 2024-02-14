@@ -2,7 +2,7 @@ import strawberry
 from sqlalchemy import select
 
 from obugs.database.tag import Tag
-from obugs.graphql.types import Tag as TagGQL
+from obugs.graphql.types.generated import Tag as TagGQL
 
 
 @strawberry.type

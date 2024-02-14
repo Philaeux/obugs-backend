@@ -4,7 +4,7 @@ from enum import IntFlag
 from sqlalchemy import ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from obugs.database.entity_base import Base
+from obugs.database.base import Base
 
 
 class SoftwareRole(IntFlag):

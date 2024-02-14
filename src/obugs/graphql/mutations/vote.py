@@ -6,8 +6,8 @@ from obugs.database.entry import Entry
 from obugs.database.entry_message import EntryMessagePatch
 from obugs.database.user import User
 from obugs.database.vote import Vote
-from obugs.graphql.types import VoteUpdate, OBugsError
-from obugs.helpers import check_user
+from obugs.graphql.types.generated import VoteUpdate, OBugsError
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type

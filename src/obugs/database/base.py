@@ -1,5 +1,3 @@
-import uuid
-
 from sqlalchemy import Table, Column, ForeignKey
 from sqlalchemy.orm import DeclarativeBase
 

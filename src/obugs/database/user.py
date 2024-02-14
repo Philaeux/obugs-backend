@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import String, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from obugs.database.entity_base import Base
+from obugs.database.base import Base
 
 
 class User(Base):

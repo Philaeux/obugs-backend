@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, BigInteger, Index, UUID
 
-from obugs.database.entity_base import Base
+from obugs.database.base import Base
 
 
 class EntryMessage(Base):

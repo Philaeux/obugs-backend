@@ -5,8 +5,8 @@ import strawberry
 from sqlalchemy import or_
 
 from obugs.database.user import User
-from obugs.graphql.types import OBugsError, User as UserGQL
-from obugs.helpers import check_user
+from obugs.graphql.types.generated import OBugsError, User as UserGQL
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type

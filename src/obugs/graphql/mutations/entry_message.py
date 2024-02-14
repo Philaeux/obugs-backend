@@ -11,9 +11,9 @@ from obugs.database.entry import Entry, EntryStatus
 from obugs.database.entry_message import EntryMessage, EntryMessagePatch, EntryMessageComment
 from obugs.database.user_software_role import SoftwareRole
 from obugs.database.vote import Vote
-from obugs.graphql.types import OBugsError, OperationDone, ProcessPatchSuccess, \
+from obugs.graphql.types.generated import OBugsError, OperationDone, ProcessPatchSuccess, \
     EntryMessageComment as EntryMessageCommentGQL, EntryMessagePatch as EntryMessagePatchGQL
-from obugs.helpers import check_user
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type
@@ -28,7 +28,7 @@ class MutationEntryMessage:
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['config']['Default']['RECAPTCHA'],
+                'secret': info.context['settings'].recaptcha,
                 'response': recaptcha
             })
             result = response.json()
@@ -101,7 +101,7 @@ class MutationEntryMessage:
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['config']['Default']['RECAPTCHA'],
+                'secret': info.context['settings'].recaptcha,
                 'response': recaptcha
             })
             result = response.json()

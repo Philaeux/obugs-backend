@@ -4,8 +4,8 @@ import strawberry
 from obugs.database.user import User
 from obugs.database.software import Software
 from obugs.database.tag import Tag
-from obugs.graphql.types import OBugsError, Tag as TagGQL
-from obugs.helpers import check_user
+from obugs.graphql.types.generated import OBugsError, Tag as TagGQL
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type

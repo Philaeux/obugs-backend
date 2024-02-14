@@ -7,7 +7,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from obugs.database.entity_base import Base
+from obugs.database.base import Base
 from obugs.database.software import Software
 from obugs.database.user import User
 from obugs.database.tag import Tag

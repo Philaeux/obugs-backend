@@ -1,8 +1,8 @@
 version: '3'
 services:
-  postgres:
+  obugs-backend-dev-db:
     image: postgres:latest
-    container_name: obugs-db
+    container_name: obugs-backend-dev-db
     restart: always
     ports:
       - "5432:5432"

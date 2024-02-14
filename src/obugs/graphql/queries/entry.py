@@ -5,7 +5,7 @@ import strawberry
 from sqlalchemy import select, and_
 
 from obugs.database.entry import Entry, EntryStatus
-from obugs.graphql.types import Entry as EntryGQL
+from obugs.graphql.types.generated import Entry as EntryGQL
 
 
 @strawberry.type

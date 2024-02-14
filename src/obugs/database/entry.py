@@ -7,8 +7,8 @@ import strawberry
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey, BigInteger, Text, Index, event, UUID
 
-from obugs.database.entity_base import Base
-from obugs.database.entity_base import association_tags_entries
+from obugs.database.base import Base
+from obugs.database.base import association_tags_entries
 
 
 @strawberry.enum

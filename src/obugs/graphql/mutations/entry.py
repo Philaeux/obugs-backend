@@ -11,8 +11,8 @@ from obugs.database.tag import Tag
 from obugs.database.user import User
 from obugs.database.vote import Vote
 
-from obugs.helpers import check_user
-from obugs.graphql.types import OBugsError, Entry as EntryGQL
+from obugs.utils.helpers import check_user
+from obugs.graphql.types.generated import OBugsError, Entry as EntryGQL
 
 
 @strawberry.type
@@ -27,7 +27,7 @@ class MutationEntry:
 
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['config']['Default']['RECAPTCHA'],
+                'secret': info.context['settings'].recaptcha,
                 'response': recaptcha
             })
             result = response.json()

@@ -3,8 +3,8 @@ import uuid
 import strawberry
 from obugs.database.user import User
 from obugs.database.user_software_role import UserSoftwareRole
-from obugs.graphql.types import OBugsError, User as UserGQL
-from obugs.helpers import check_user
+from obugs.graphql.types.generated import OBugsError, User as UserGQL
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type

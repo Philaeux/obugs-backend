@@ -1,19 +1,19 @@
 version: '3'
 services:
-  server:
+  obugs-backend-server:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: obugs-server
+    container_name: obugs-backend-server
     restart: always
     ports:
       - "19998:5000"
     depends_on:
       postgres:
         condition: service_healthy
-  db:
+  obugs-backend-db:
     image: postgres:latest
-    container_name: obugs-db
+    container_name: obugs-backend-db
     restart: always
     environment:
       POSTGRES_DB: obugs

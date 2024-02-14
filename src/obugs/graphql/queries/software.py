@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from obugs.database.software import Software
 from obugs.database.software_suggestion import SoftwareSuggestion
-from obugs.graphql.types import Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
+from obugs.graphql.types.generated import Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
 
 @strawberry.type
 class QuerySoftware:

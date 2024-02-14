@@ -1,6 +1,6 @@
 import uuid
 
-from obugs.database.entity_base import Base
+from obugs.database.base import Base
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, Text, ForeignKey

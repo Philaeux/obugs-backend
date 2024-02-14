@@ -7,8 +7,8 @@ import requests
 from obugs.database.user import User
 from obugs.database.software import Software
 from obugs.database.software_suggestion import SoftwareSuggestion
-from obugs.graphql.types import OBugsError, OperationDone, Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
-from obugs.helpers import check_user
+from obugs.graphql.types.generated import OBugsError, OperationDone, Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type
@@ -41,7 +41,7 @@ class MutationSoftware:
     async def suggest_software(self, info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['config']['Default']['RECAPTCHA'],
+                'secret': info.context['settings'].recaptcha,
                 'response': recaptcha
             })
             result = response.json()

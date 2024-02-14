@@ -3,8 +3,8 @@ import uuid
 import strawberry
 
 from obugs.database.vote import Vote
-from obugs.graphql.types import Vote as VoteGQL
-from obugs.helpers import check_user
+from obugs.graphql.types.generated import Vote as VoteGQL
+from obugs.utils.helpers import check_user
 
 
 @strawberry.type
