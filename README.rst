@@ -28,7 +28,7 @@ If you wish to use docker-postgresql in dev, start it using the .dev compose fil
     docker compose -f docker-compose.dev.yaml --env-file docker.env up 
     # Optional, make a backup of production database
     sudo rsync -av --no-perms --delete --chown=$(whoami) ../obugs_postgres_data/ ~/obugs_postgres_save
-	sudo chown -R $(whoami):$(whoami) ../obugs_postgres_save
+    sudo chown -R $(whoami):$(whoami) ../obugs_postgres_save
     # And download it to use for your development tests
     sudo rsync -avz --stats --delete $(whoami)@<server>:~/obugs_postgres_save/ ../obugs_postgres_data
     sudo rm -rf ~/obugs_postgres_save
