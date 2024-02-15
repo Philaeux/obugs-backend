@@ -37,7 +37,7 @@ app.add_middleware(
 # GraphQL
 async def get_context():
     return {
-        "config": settings,
+        "settings": settings,
         "session_factory": database.session_factory,
         "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=database.session_factory()),
     }
