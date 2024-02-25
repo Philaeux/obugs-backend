@@ -1,8 +1,8 @@
 import uuid
 
 import strawberry
+from strawberry.types import Info
 from sqlalchemy import select
-from sqlalchemy.orm import with_polymorphic
 
 from obugs.database.entry_message import EntryMessage, EntryMessagePatch
 from obugs.graphql.types.generated import EntryMessagePatch as EntryMessagePatchGQL, \
@@ -13,7 +13,7 @@ from obugs.graphql.types.generated import EntryMessagePatch as EntryMessagePatch
 class QueryEntryMessage:
 
     @strawberry.field
-    async def entry_messages(self, info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) \
+    async def entry_messages(self, info: Info, entry_id: uuid.UUID, limit: int = 50, offset: int = 0) \
             -> list[EntryMessagePatchGQL | EntryMessageCommentGQL | EntryMessageCreationQGL]:
         with info.context['session_factory']() as session:
             sql = select(EntryMessage) \
@@ -24,7 +24,7 @@ class QueryEntryMessage:
             return db_messages
 
     @strawberry.field
-    async def open_patches(self, info, software_id: str | None) -> list[EntryMessagePatchGQL]:
+    async def open_patches(self, info: Info, software_id: str | None) -> list[EntryMessagePatchGQL]:
         with info.context['session_factory']() as session:
             sql = select(EntryMessagePatch) \
                 .where(EntryMessagePatch.is_closed == False)

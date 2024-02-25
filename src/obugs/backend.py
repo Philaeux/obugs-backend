@@ -1,4 +1,5 @@
 import base64
+from contextlib import asynccontextmanager
 import uuid
 from urllib.parse import quote
 
@@ -19,7 +20,15 @@ from obugs.graphql.schema import schema
 
 # App
 settings = Settings()
-app = FastAPI()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Add startup functions here
+    yield
+    # Add shutdown functions here
+
+app = FastAPI(lifespan=lifespan)
 
 # Database
 database = Database(uri=settings.database_uri, check_migrations=True)

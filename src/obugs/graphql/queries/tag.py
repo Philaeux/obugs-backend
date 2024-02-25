@@ -1,4 +1,5 @@
 import strawberry
+from strawberry.types import Info
 from sqlalchemy import select
 
 from obugs.database.tag import Tag
@@ -9,7 +10,7 @@ from obugs.graphql.types.generated import Tag as TagGQL
 class QueryTag:
 
     @strawberry.field
-    async def tags(self, info, software_id: str, search: str | None) -> list[TagGQL]:
+    async def tags(self, info: Info, software_id: str, search: str | None) -> list[TagGQL]:
         with info.context['session_factory']() as session:
             sql = select(Tag).where(Tag.software_id == software_id)
 

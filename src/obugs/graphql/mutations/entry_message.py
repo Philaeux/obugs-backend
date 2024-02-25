@@ -4,6 +4,7 @@ import uuid
 
 import requests
 import strawberry
+from strawberry.types import Info
 
 from obugs.database.tag import Tag
 from obugs.database.user import User
@@ -20,7 +21,7 @@ from obugs.utils.helpers import check_user
 class MutationEntryMessage:
 
     @strawberry.mutation
-    async def comment_entry(self, info, recaptcha: str, entry_id: uuid.UUID, comment: str) \
+    async def comment_entry(self, info: Info, recaptcha: str, entry_id: uuid.UUID, comment: str) \
             -> OBugsError | EntryMessageCommentGQL:
         current_user = check_user(info.context)
         if current_user is None:
@@ -61,7 +62,7 @@ class MutationEntryMessage:
             return message
 
     @strawberry.mutation
-    async def delete_message(self, info, message_id: uuid.UUID) -> OBugsError | OperationDone:
+    async def delete_message(self, info: Info, message_id: uuid.UUID) -> OBugsError | OperationDone:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -93,7 +94,7 @@ class MutationEntryMessage:
             return OperationDone(success=True)
 
     @strawberry.mutation
-    async def submit_patch(self, info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
+    async def submit_patch(self, info: Info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
                      description: str, illustration: str) -> OBugsError | EntryMessagePatchGQL:
         current_user = check_user(info.context)
         if current_user is None:
@@ -174,7 +175,7 @@ class MutationEntryMessage:
             return patch
 
     @strawberry.mutation
-    async def process_patch(self, info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
+    async def process_patch(self, info: Info, message_id: uuid.UUID, accept: bool) -> OBugsError | ProcessPatchSuccess:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")

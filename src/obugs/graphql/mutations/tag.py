@@ -1,5 +1,6 @@
 import uuid
 import strawberry
+from strawberry.types import Info
 
 from obugs.database.user import User
 from obugs.database.software import Software
@@ -12,7 +13,7 @@ from obugs.utils.helpers import check_user
 class MutationTag:
 
     @strawberry.mutation
-    async def upsert_tag(self, info, id: uuid.UUID | None, software_id: str, name: str, font_color: str,
+    async def upsert_tag(self, info: Info, id: uuid.UUID | None, software_id: str, name: str, font_color: str,
                          background_color: str) -> OBugsError | TagGQL:
         current_user = check_user(info.context)
         if current_user is None:

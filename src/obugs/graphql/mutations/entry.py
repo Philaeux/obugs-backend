@@ -4,6 +4,7 @@ import uuid
 
 import requests
 import strawberry
+from strawberry.types import Info
 
 from obugs.database.entry import Entry, EntryStatus
 from obugs.database.entry_message import EntryMessageCreation
@@ -19,7 +20,7 @@ from obugs.graphql.types.generated import OBugsError, Entry as EntryGQL
 class MutationEntry:
 
     @strawberry.mutation
-    async def create_entry(self, info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
+    async def create_entry(self, info: Info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
                      illustration: str) -> OBugsError | EntryGQL:
         current_user = check_user(info.context)
         if current_user is None:

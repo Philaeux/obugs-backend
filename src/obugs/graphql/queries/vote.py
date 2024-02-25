@@ -1,6 +1,7 @@
 import uuid
 
 import strawberry
+from strawberry.types import Info
 
 from obugs.database.vote import Vote
 from obugs.graphql.types.generated import Vote as VoteGQL
@@ -11,7 +12,7 @@ from obugs.utils.helpers import check_user
 class QueryVote:
 
     @strawberry.field
-    async def my_vote(self, info, subject_id: uuid.UUID) -> VoteGQL | None:
+    async def my_vote(self, info: Info, subject_id: uuid.UUID) -> VoteGQL | None:
         current_user = check_user(info.context)
         if current_user is None:
             return None

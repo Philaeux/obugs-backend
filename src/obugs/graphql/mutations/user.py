@@ -1,6 +1,8 @@
 import uuid
 
 import strawberry
+from strawberry.types import Info
+
 from obugs.database.user import User
 from obugs.database.user_software_role import UserSoftwareRole
 from obugs.graphql.types.generated import OBugsError, User as UserGQL
@@ -11,7 +13,7 @@ from obugs.utils.helpers import check_user
 class MutationUser:
 
     @strawberry.mutation
-    async def ban_user(self, info, user_id: uuid.UUID, ban: bool) -> OBugsError | UserGQL:
+    async def ban_user(self, info: Info, user_id: uuid.UUID, ban: bool) -> OBugsError | UserGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -32,7 +34,7 @@ class MutationUser:
             return to_ban
 
     @strawberry.mutation
-    async def change_role(self, info, user_id: uuid.UUID, software_id: str, role: int, set_on: bool) -> OBugsError | UserGQL:
+    async def change_role(self, info: Info, user_id: uuid.UUID, software_id: str, role: int, set_on: bool) -> OBugsError | UserGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")

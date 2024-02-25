@@ -2,6 +2,7 @@ import uuid
 from uuid import UUID
 
 import strawberry
+from strawberry.types import Info
 import requests
 
 from obugs.database.user import User
@@ -15,7 +16,7 @@ from obugs.utils.helpers import check_user
 class MutationSoftware:
 
     @strawberry.mutation
-    async def upsert_software(self, info, id: str, full_name: str, editor: str, description: str,
+    async def upsert_software(self, info: Info, id: str, full_name: str, editor: str, description: str,
                               language: str) -> OBugsError | SoftwareGQL:
         current_user = check_user(info.context)
         if current_user is None:
@@ -38,7 +39,7 @@ class MutationSoftware:
             return db_software
 
     @strawberry.mutation
-    async def suggest_software(self, info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
+    async def suggest_software(self, info: Info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
         try:
             response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
                 'secret': info.context['settings'].recaptcha,
@@ -62,7 +63,7 @@ class MutationSoftware:
             return db_suggestion
 
     @strawberry.mutation
-    async def delete_suggestion(self, info, suggestion_id: uuid.UUID) -> OBugsError | OperationDone:
+    async def delete_suggestion(self, info: Info, suggestion_id: uuid.UUID) -> OBugsError | OperationDone:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")

@@ -1,6 +1,7 @@
 import uuid
 
 import strawberry
+from strawberry.types import Info
 
 from sqlalchemy import or_
 
@@ -13,7 +14,7 @@ from obugs.utils.helpers import check_user
 class QueryUser:
 
     @strawberry.field
-    async def current_user(self, info) -> OBugsError | UserGQL:
+    async def current_user(self, info: Info) -> OBugsError | UserGQL:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")
@@ -27,13 +28,13 @@ class QueryUser:
             return db_user
 
     @strawberry.field
-    async def user(self, info, user_id: uuid.UUID) -> UserGQL | None:
+    async def user(self, info: Info, user_id: uuid.UUID) -> UserGQL | None:
         with info.context['session_factory']() as session:
             db_user = session.query(User).where(User.id == user_id).one_or_none()
             return db_user
 
     @strawberry.field
-    async def users(self, info, search: str | None) -> list[UserGQL]:
+    async def users(self, info: Info, search: str | None) -> list[UserGQL]:
         with info.context['session_factory']() as session:
             db_users = session.query(User)
 

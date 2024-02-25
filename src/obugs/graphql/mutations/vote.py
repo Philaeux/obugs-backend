@@ -1,6 +1,7 @@
 import uuid
 
 import strawberry
+from strawberry.types import Info
 
 from obugs.database.entry import Entry
 from obugs.database.entry_message import EntryMessagePatch
@@ -14,7 +15,7 @@ from obugs.utils.helpers import check_user
 class MutationVote:
 
     @strawberry.mutation
-    async def vote(self, info, subject_id: uuid.UUID, rating: int) -> OBugsError | VoteUpdate:
+    async def vote(self, info: Info, subject_id: uuid.UUID, rating: int) -> OBugsError | VoteUpdate:
         current_user = check_user(info.context)
         if current_user is None:
             return OBugsError(message="Not logged client")

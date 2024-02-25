@@ -2,6 +2,7 @@ import uuid
 import asyncio
 
 import strawberry
+from strawberry.types import Info
 from sqlalchemy import select, and_
 
 from obugs.database.entry import Entry, EntryStatus
@@ -12,14 +13,14 @@ from obugs.graphql.types.generated import Entry as EntryGQL
 class QueryEntry:
 
     @strawberry.field
-    async def entry(self, info, entry_id: uuid.UUID) -> EntryGQL | None:
+    async def entry(self, info: Info, entry_id: uuid.UUID) -> EntryGQL | None:
         with info.context['session_factory']() as session:
             db_entry = session.query(Entry).where(Entry.id == entry_id).one_or_none()
             len(db_entry.tags)
             return db_entry
 
     @strawberry.field
-    async def entries(self, info, software_id: str, search_filter: str | None,
+    async def entries(self, info: Info, software_id: str, search_filter: str | None,
                 status_filter: list[str] = ['CONFIRMED', 'WIP', 'CHECK'], order: str = '', limit: int = 20,
                 offset: int = 0) -> list[EntryGQL]:
         asyncio.get_event_loop()
