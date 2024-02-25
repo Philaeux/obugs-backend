@@ -713,6 +713,17 @@ files = [
 ]
 
 [[package]]
+name = "iniconfig"
+version = "2.0.0"
+description = "brain-dead simple config-ini parsing"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "iniconfig-2.0.0-py3-none-any.whl", hash = "sha256:b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374"},
+    {file = "iniconfig-2.0.0.tar.gz", hash = "sha256:2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3"},
+]
+
+[[package]]
 name = "itsdangerous"
 version = "2.1.2"
 description = "Safely pass data to untrusted environments and back."
@@ -992,6 +1003,21 @@ files = [
 [package.extras]
 docs = ["furo (>=2023.9.10)", "proselint (>=0.13)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
+
+[[package]]
+name = "pluggy"
+version = "1.4.0"
+description = "plugin and hook calling mechanisms for python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pluggy-1.4.0-py3-none-any.whl", hash = "sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981"},
+    {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
+]
+
+[package.extras]
+dev = ["pre-commit", "tox"]
+testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "psycopg"
@@ -1299,6 +1325,44 @@ files = [
 [package.extras]
 plugins = ["importlib-metadata"]
 windows-terminal = ["colorama (>=0.4.6)"]
+
+[[package]]
+name = "pytest"
+version = "8.0.2"
+description = "pytest: simple powerful testing with Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-8.0.2-py3-none-any.whl", hash = "sha256:edfaaef32ce5172d5466b5127b42e0d6d35ebbe4453f0e3505d96afd93f6b096"},
+    {file = "pytest-8.0.2.tar.gz", hash = "sha256:d4051d623a2e0b7e51960ba963193b09ce6daeb9759a451844a21e4ddedfc1bd"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "sys_platform == \"win32\""}
+iniconfig = "*"
+packaging = "*"
+pluggy = ">=1.3.0,<2.0"
+
+[package.extras]
+testing = ["argcomplete", "attrs (>=19.2.0)", "hypothesis (>=3.56)", "mock", "nose", "pygments (>=2.7.2)", "requests", "setuptools", "xmlschema"]
+
+[[package]]
+name = "pytest-asyncio"
+version = "0.23.5"
+description = "Pytest support for asyncio"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pytest-asyncio-0.23.5.tar.gz", hash = "sha256:3a048872a9c4ba14c3e90cc1aa20cbc2def7d01c7c8db3777ec281ba9c057675"},
+    {file = "pytest_asyncio-0.23.5-py3-none-any.whl", hash = "sha256:4e7093259ba018d58ede7d5315131d21923a60f8a6e9ee266ce1589685c89eac"},
+]
+
+[package.dependencies]
+pytest = ">=7.0.0,<9"
+
+[package.extras]
+docs = ["sphinx (>=5.3)", "sphinx-rtd-theme (>=1.0)"]
+testing = ["coverage (>=6.2)", "hypothesis (>=5.7.1)"]
 
 [[package]]
 name = "python-dateutil"
@@ -1871,6 +1935,23 @@ standalone = ["Sphinx (>=5)"]
 test = ["pytest"]
 
 [[package]]
+name = "sqlakeyset"
+version = "2.0.1708730727"
+description = "offset-free paging for sqlalchemy"
+optional = false
+python-versions = ">=3.7,<4.0"
+files = [
+    {file = "sqlakeyset-2.0.1708730727-py3-none-any.whl", hash = "sha256:792df5d74f240ba45d2c2fbdf284d1ca464c2117a3a90d183b4556392137c72e"},
+    {file = "sqlakeyset-2.0.1708730727.tar.gz", hash = "sha256:f6b0ca8b459005385df566653bead8253895f7c7a82be25f46a816ff2488c499"},
+]
+
+[package.dependencies]
+packaging = ">=20.0"
+python-dateutil = "*"
+sqlalchemy = ">=1.3.11"
+typing_extensions = ">=4,<5"
+
+[[package]]
 name = "sqlalchemy"
 version = "2.0.27"
 description = "Database Abstraction Library"
@@ -2011,18 +2092,19 @@ starlite = ["starlite (>=1.48.0)"]
 
 [[package]]
 name = "strawberry-sqlalchemy-mapper"
-version = "0.3.1"
+version = "0.4.2"
 description = "A library for autogenerating Strawberry GraphQL types from SQLAlchemy models."
 optional = false
 python-versions = ">=3.8,<4.0"
 files = [
-    {file = "strawberry_sqlalchemy_mapper-0.3.1-py3-none-any.whl", hash = "sha256:f591792b03a7dcb0de92df5d74c13a747dd763d5d47331a96ddf08309847dcea"},
-    {file = "strawberry_sqlalchemy_mapper-0.3.1.tar.gz", hash = "sha256:d26e2d2793c18b6dbfd127e0ce1a3dcd6b75e4de152dcd0aae1bd45cd36a9a0e"},
+    {file = "strawberry_sqlalchemy_mapper-0.4.2-py3-none-any.whl", hash = "sha256:e8375d1173d8604117ea6e8f0212201000815d9150cf475e05f6bc658e7ecc10"},
+    {file = "strawberry_sqlalchemy_mapper-0.4.2.tar.gz", hash = "sha256:7cc7a676b363eafdd14c5aaf4d9b17af440d386919bad7caa996971543d0f029"},
 ]
 
 [package.dependencies]
 greenlet = {version = ">=3.0.0rc1", markers = "python_version >= \"3.12\""}
 sentinel = ">=0.3,<1.1"
+sqlakeyset = ">=2.0.1695177552,<3.0.0"
 sqlalchemy = {version = ">=1.4", extras = ["asyncio"]}
 strawberry-graphql = ">=0.95"
 
@@ -2404,4 +2486,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "caf4808f4a3d6cc419ccf4e59833752e8fc75976ae32b87e4a6bc26a2e877be8"
+content-hash = "a7932263dd64e5b40aeb3cdb744b80afebe33addf1d1b0ca13aeca679addf756"
