@@ -13,9 +13,9 @@ from obugs.database.database import (
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-from obugs.cfg import cfg
+from obugs.settings import Settings
 config = context.config
-config.set_main_option("sqlalchemy.url", cfg['Default']['DATABASE'])
+config.set_main_option("sqlalchemy.url", Settings().database_uri)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

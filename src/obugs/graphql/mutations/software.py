@@ -8,75 +8,72 @@ import requests
 from obugs.database.user import User
 from obugs.database.software import Software
 from obugs.database.software_suggestion import SoftwareSuggestion
-from obugs.graphql.types.generated import OBugsError, OperationDone, Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
+from obugs.graphql.types.generated import Software as SoftwareGQL, SoftwareSuggestion as SoftwareSuggestionGQL
+from obugs.graphql.types.generic import ApiSuccess, ApiError
 from obugs.utils.helpers import check_user
 
 
-@strawberry.type
-class MutationSoftware:
+async def software_suggest(info: Info, recaptcha: str, name: str, description: str) -> ApiError | SoftwareSuggestionGQL:
+    try:
+        response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
+            'secret': info.context['settings'].recaptcha,
+            'response': recaptcha
+        })
+        result = response.json()
+        if not result['success']:
+            return ApiError(message='Invalid recaptcha.')
+    except Exception:
+        return ApiError(message='Problem while checking recaptcha.')
 
-    @strawberry.mutation
-    async def upsert_software(self, info: Info, id: str, full_name: str, editor: str, description: str,
-                              language: str) -> OBugsError | SoftwareGQL:
-        current_user = check_user(info.context)
-        if current_user is None:
-            return OBugsError(message="Not logged client")
+    current_user = check_user(info.context)
+    if current_user is None:
+        return ApiError(message="Not logged client")
 
-        with info.context['session_factory'](expire_on_commit=False) as session:
-            db_user = session.query(User).where(User.id == UUID(current_user)).one_or_none()
-            if db_user is None or db_user.is_banned or not db_user.is_admin:
-                return OBugsError(message="Mutation not allowed for this user.")
+    with info.context['session_factory'](expire_on_commit=False) as session:
+        db_suggestion = SoftwareSuggestion(id=uuid.uuid4(), user_id=current_user, name=name, description=description)
+        session.add(db_suggestion)
+        session.commit()
 
-            db_software = session.query(Software).where(Software.id == id).one_or_none()
-            if db_software is None:
-                db_software = Software(id=id)
-                session.add(db_software)
-            db_software.full_name = full_name
-            db_software.editor = editor
-            db_software.description = description
-            db_software.language = language
-            session.commit()
-            return db_software
+        return db_suggestion
 
-    @strawberry.mutation
-    async def suggest_software(self, info: Info, recaptcha: str, name: str, description: str) -> OBugsError | SoftwareSuggestionGQL:
-        try:
-            response = requests.post('https://www.google.com/recaptcha/api/siteverify', {
-                'secret': info.context['settings'].recaptcha,
-                'response': recaptcha
-            })
-            result = response.json()
-            if not result['success']:
-                return OBugsError(message='Invalid recaptcha.')
-        except Exception:
-            return OBugsError(message='Problem while checking recaptcha.')
 
-        current_user = check_user(info.context)
-        if current_user is None:
-            return OBugsError(message="Not logged client")
+async def software_suggestion_delete(info: Info, suggestion_id: uuid.UUID) -> ApiError | ApiSuccess:
+    current_user = check_user(info.context)
+    if current_user is None:
+        return ApiError(message="Not logged client")
 
-        with info.context['session_factory'](expire_on_commit=False) as session:
-            db_suggestion = SoftwareSuggestion(id=uuid.uuid4(), user_id=current_user, name=name, description=description)
-            session.add(db_suggestion)
-            session.commit()
+    with info.context['session_factory'](expire_on_commit=False) as session:
+        db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
+        if db_user is None or db_user.is_banned or not db_user.is_admin:
+            return ApiError(message="Impossible for user to do this action.")
 
-            return db_suggestion
+        to_delete = session.query(SoftwareSuggestion).where(SoftwareSuggestion.id == suggestion_id).one_or_none()
+        if to_delete is None:
+            return ApiError(message="Target message not found.")
 
-    @strawberry.mutation
-    async def delete_suggestion(self, info: Info, suggestion_id: uuid.UUID) -> OBugsError | OperationDone:
-        current_user = check_user(info.context)
-        if current_user is None:
-            return OBugsError(message="Not logged client")
+        session.delete(to_delete)
+        session.commit()
+        return ApiSuccess(message="")
 
-        with info.context['session_factory'](expire_on_commit=False) as session:
-            db_user = session.query(User).where(User.id == uuid.UUID(current_user)).one_or_none()
-            if db_user is None or db_user.is_banned or not db_user.is_admin:
-                return OBugsError(message="Impossible for user to do this action.")
 
-            to_delete = session.query(SoftwareSuggestion).where(SoftwareSuggestion.id == suggestion_id).one_or_none()
-            if to_delete is None:
-                return OBugsError(message="Target message not found.")
+async def software_upsert(info: Info, id: str, full_name: str, editor: str, description: str,
+                          language: str) -> ApiError | SoftwareGQL:
+    current_user = check_user(info.context)
+    if current_user is None:
+        return ApiError(message="Not logged client")
 
-            session.delete(to_delete)
-            session.commit()
-            return OperationDone(success=True)
+    with info.context['session_factory'](expire_on_commit=False) as session:
+        db_user = session.query(User).where(User.id == UUID(current_user)).one_or_none()
+        if db_user is None or db_user.is_banned or not db_user.is_admin:
+            return ApiError(message="Mutation not allowed for this user.")
+
+        db_software = session.query(Software).where(Software.id == id).one_or_none()
+        if db_software is None:
+            db_software = Software(id=id)
+            session.add(db_software)
+        db_software.full_name = full_name
+        db_software.editor = editor
+        db_software.description = description
+        db_software.language = language
+        session.commit()
+        return db_software

@@ -1,4 +1,3 @@
-import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper
 
 from obugs.database.entry import Entry as EntryEntity
@@ -76,27 +75,3 @@ class UserSoftwareRole:
 @strawberry_sqlalchemy_mapper.type(VoteEntity)
 class Vote:
     __exclude__ = ["votes"]
-
-
-# COMPOSITE TYPES
-@strawberry.type
-class OperationDone:
-    success: bool
-
-
-@strawberry.type
-class ProcessPatchSuccess:
-    entry: Entry
-    entry_message: EntryMessagePatch
-
-
-@strawberry.type
-class VoteUpdate:
-    rating_total: int
-    rating_count: int
-
-
-# OTHERS
-@strawberry.type
-class OBugsError:
-    message: str
