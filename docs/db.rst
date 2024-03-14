@@ -69,3 +69,25 @@ ORM
 
 .. automodule:: obugs.database.vote
   :members:
+
+To use the database, we use the Database singleton.
+
+.. autoclass:: template.database.database.Database
+    :members:
+
+Migrations
+-----------
+
+To generate a new database migration (new tables, new columns, deletions, updates...), change the ORM classes first. 
+Then, generate the new migration using Alembic::
+
+    poetry run alembic revision --autogenerate
+
+A new migration will appear in ``src/template/alembic/versions``. Update the file accordingly.
+
+It's possible to decide if migrations are automaticaly run at startup. Otherwise, use manual updates::
+
+    # Forward
+    poetry run alembic revision +1
+    # Backward
+    poetry run alembic revision -1
