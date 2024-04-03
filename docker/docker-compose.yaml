@@ -1,26 +1,32 @@
 version: '3'
 services:
-  obugs-backend-server:
+  server:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    image: obugs-backend
+
     container_name: obugs-backend-server
     restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+
     ports:
       - "19998:5000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-  obugs-backend-db:
+
+  db:
     image: postgres:latest
+
     container_name: obugs-backend-db
     restart: always
+
     environment:
       POSTGRES_DB: obugs
       POSTGRES_USER: obugs
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ../../obugs_postgres_data:/var/lib/postgresql/data
+      - ${POSTGRES_PATH}:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U obugs" ]
       interval: 5s

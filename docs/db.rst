@@ -72,7 +72,7 @@ ORM
 
 To use the database, we use the Database singleton.
 
-.. autoclass:: template.database.database.Database
+.. autoclass:: obugs.database.database.Database
     :members:
 
 Migrations

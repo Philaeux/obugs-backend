@@ -1,14 +1,16 @@
 version: '3'
 services:
-  obugs-backend-dev-db:
+  db:
     image: postgres:latest
+
     container_name: obugs-backend-dev-db
     restart: always
-    ports:
-      - "5432:5432"
+
     environment:
       POSTGRES_DB: obugs
       POSTGRES_USER: obugs
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
     volumes:
-      - ../../obugs_postgres_data:/var/lib/postgresql/data
+      - ${POSTGRES_PATH}:/var/lib/postgresql/data

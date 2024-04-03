@@ -1,22 +1,22 @@
 import base64
-from contextlib import asynccontextmanager
 import uuid
+from contextlib import asynccontextmanager
 from urllib.parse import quote
 
+import requests
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.requests import Request
 from fastapi.responses import RedirectResponse
-import requests
 from sqlalchemy.orm import Session
 from strawberry.fastapi import GraphQLRouter
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyLoader
 
-from obugs.settings import Settings
 from obugs.database.database import Database
 from obugs.database.user import User
-from obugs.utils.helpers import create_jwt_token, create_oauth_state, check_oauth_state
 from obugs.graphql.schema import schema
+from obugs.settings import Settings
+from obugs.utils.helpers import create_jwt_token, create_oauth_state, check_oauth_state
 
 # App
 settings = Settings()
