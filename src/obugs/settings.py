@@ -14,24 +14,24 @@ class Settings(metaclass=SingletonMeta):
         backend_uri: URI this backend is accessed from
         database_uri: URI to connect to the database
         recaptcha: Recaptcha secret
-        github_client: Login with Github app client ID
-        github_secret: Login with Github app secret
+        github_client: Login with GitHub app client ID
+        github_secret: Login with GitHub app secret
         reddit_client: Login with Reddit app client ID
         reddit_secret: Login with Reddit app secret
     """
     debug: bool = True
-    jwt_secret_key: str = "sssssssss"
+    jwt_secret_key: str = "change-me"
     frontend_uri: str = "http://127.0.0.1:4200"
     backend_uri: str = "http://127.0.0.1:5000"
-    database_uri: str = "postgresql+psycopg://obugs:sssssssss@host.docker.internal:5432/obugs"
-    recaptcha: str = "sssssssss"
-    github_client: str = "sssssssss"
-    github_secret: str = "sssssssss"
-    reddit_client: str = "sssssssss"
-    reddit_secret: str = "sssssssss"
+    database_uri: str = "sqlite:///:memory:"
+    recaptcha: str = "make-an-application"
+    github_client: str = "make-an-application"
+    github_secret: str = "change-me"
+    reddit_client: str = "make-an-application"
+    reddit_secret: str = "change-me"
 
     def __init__(self):
-        """Lis le fichier de configuration depuis le fichier settings.ini"""
+        """Create a default configuration, then read from settings.ini"""
         cfg = configparser.ConfigParser()
         cfg.read(Path(__file__).parent / ".." / "settings.ini")
 
