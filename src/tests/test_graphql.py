@@ -16,8 +16,8 @@ async def test_users(context):
     """Test the execution of the querry qa"""
     
     query = """
-        query TestQuery {
-            users {
+        query TestQuery($search: String) {
+            users(search: $search) {
                 id
             }
         }
@@ -26,7 +26,9 @@ async def test_users(context):
     result = await schema.execute(
         query,
         context_value=context,
-        variable_values={},
+        variable_values={
+            "search": None
+        },
     )
 
     assert result.errors is None

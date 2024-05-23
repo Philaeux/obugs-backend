@@ -54,10 +54,15 @@ async def get_context():
 
 graphql_app = GraphQLRouter(
     schema,
-    graphiql=settings.debug,
+    graphql_ide="graphiql" if settings.debug else None,
     context_getter=get_context,
 )
 app.include_router(graphql_app, prefix="/graphql")
+
+
+@app.get('/hello')
+async def hello(request: Request):
+    return {"message": "Hello World"}
 
 
 @app.get('/oauth/github/start')

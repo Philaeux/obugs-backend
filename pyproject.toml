@@ -13,10 +13,10 @@ alembic = "^1.13.1"
 SQLAlchemy = "^2.0.25"
 fastapi = {extras = ["all"], version = "^0.111.0"}
 strawberry-graphql = "^0.230.0"
-strawberry-sqlalchemy-mapper = "==0.4.3"
 python-jose = {extras = ["pycryptodome"], version = "^3.3.0"}
 requests = "^2.31.0"
 uvicorn = "^0.29.0"
+strawberry-sqlalchemy-mapper = "0.3.1"
 
 [tool.poetry.group.docs]
 optional = true
