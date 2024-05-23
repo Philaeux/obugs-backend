@@ -1,5 +1,6 @@
 # Project
 src/settings.ini
+src/sqlite.db
 src/obugs/database/sqlite.db
 docker/docker.env
 docs/_build
