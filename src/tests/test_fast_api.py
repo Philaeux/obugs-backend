@@ -3,11 +3,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from obugs.backend import app
+from obugs.settings import Settings
 
 
 @pytest.fixture()
 def mock_app():
     """Prepare a mock application to run REST tests"""
+    settings = Settings()
+    settings.database_uri = "sqlite:///:memory:"
     yield TestClient(app)
 
 

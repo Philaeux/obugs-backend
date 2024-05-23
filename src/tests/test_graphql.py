@@ -2,6 +2,14 @@ import pytest
 
 from obugs.graphql.schema import schema
 from obugs.backend import get_context
+from obugs.settings import Settings
+
+
+@pytest.fixture()
+def database_setup():
+    """Prepare a mock application to run REST tests"""
+    settings = Settings()
+    settings.database_uri = "sqlite:///:memory:"
 
 
 @pytest.fixture()
@@ -12,7 +20,7 @@ async def context():
 
 
 @pytest.mark.asyncio
-async def test_users(context):
+async def test_users(database_setup, context):
     """Test the execution of the querry qa"""
     
     query = """
