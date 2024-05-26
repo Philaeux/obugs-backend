@@ -38,14 +38,13 @@ def create_jwt_token(key: str, user_id: uuid.UUID):
     return token
 
 
-def check_user(context):
+def check_user(key: str, authorization_header: str | None):
     """Check headers for a login JWT and return the user_id if valid."""
-    authorization_header = context["request"].headers.get("Authorization")
-    if authorization_header and authorization_header.startswith("Bearer "):
+    if authorization_header is not None and authorization_header.startswith("Bearer "):
         token = authorization_header.split("Bearer ")[1]
 
         try:
-            payload = jwt.decode(token, context["settings"].jwt_secret_key, algorithms="HS256")
+            payload = jwt.decode(token, key, algorithms="HS256")
             user_id = payload.get("sub")
             return user_id
         except JWTError:

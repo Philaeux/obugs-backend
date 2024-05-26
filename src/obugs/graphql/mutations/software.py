@@ -25,7 +25,8 @@ async def software_suggest(info: Info, recaptcha: str, name: str, description: s
     except Exception:
         return ApiError(message='Problem while checking recaptcha.')
 
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 
@@ -38,7 +39,8 @@ async def software_suggest(info: Info, recaptcha: str, name: str, description: s
 
 
 async def software_suggestion_delete(info: Info, suggestion_id: uuid.UUID) -> ApiError | ApiSuccess:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 
@@ -58,7 +60,8 @@ async def software_suggestion_delete(info: Info, suggestion_id: uuid.UUID) -> Ap
 
 async def software_upsert(info: Info, id: str, full_name: str, editor: str, description: str,
                           language: str) -> ApiError | SoftwareGQL:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 

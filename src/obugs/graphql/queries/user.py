@@ -16,7 +16,8 @@ async def user(info: Info, user_id: uuid.UUID) -> UserGQL | None:
 
 
 async def user_current(info: Info) -> ApiError | UserGQL:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 

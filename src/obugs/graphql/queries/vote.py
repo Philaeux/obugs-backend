@@ -14,7 +14,8 @@ async def vote_my(info: Info, subject_id: uuid.UUID) -> VoteGQL | None:
         info: GraphQL context
         subject_id: Subject to have the user info about
     """
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return None
 

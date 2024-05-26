@@ -18,7 +18,8 @@ class OutputVote:
 
 
 async def vote(info: Info, subject_id: uuid.UUID, rating: int) -> ApiError | OutputVote:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 

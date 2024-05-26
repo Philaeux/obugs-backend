@@ -12,7 +12,8 @@ from obugs.utils.helpers import check_user
 
 async def tag_upsert(info: Info, id: uuid.UUID | None, software_id: str, name: str, font_color: str,
                      background_color: str) -> ApiError | TagGQL:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 

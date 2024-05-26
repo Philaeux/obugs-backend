@@ -5,11 +5,16 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from obugs.database.database import (
-    Base, Software, User, Tag, Entry, Vote,
-    EntryStatus, EntryMessageComment, EntryMessagePatch, EntryMessage, EntryMessageCreation, UserSoftwareRole,
-    SoftwareSuggestion
-)
+from obugs.database.base import Base
+from obugs.database.software import Software
+from obugs.database.user import User
+from obugs.database.tag import Tag
+from obugs.database.entry import Entry, EntryStatus
+from obugs.database.vote import Vote
+from obugs.database.entry_message import EntryMessage, EntryMessageCreation, EntryMessagePatch, EntryMessageComment
+from obugs.database.user_software_role import UserSoftwareRole
+from obugs.database.software_suggestion import SoftwareSuggestion
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

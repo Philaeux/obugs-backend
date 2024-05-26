@@ -19,7 +19,8 @@ from obugs.utils.helpers import check_user
 
 async def entry_comment(info: Info, recaptcha: str, entry_id: uuid.UUID, comment: str) \
         -> ApiError | EntryMessageCommentGQL:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 
@@ -59,7 +60,8 @@ async def entry_comment(info: Info, recaptcha: str, entry_id: uuid.UUID, comment
 
 
 async def entry_message_delete(info: Info, message_id: uuid.UUID) -> ApiError | ApiSuccess:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 
@@ -91,7 +93,8 @@ async def entry_message_delete(info: Info, message_id: uuid.UUID) -> ApiError | 
 
 
 async def entry_patch_process(info: Info, message_id: uuid.UUID, accept: bool) -> ApiError | ProcessPatchSuccess:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 
@@ -149,7 +152,8 @@ async def entry_patch_process(info: Info, message_id: uuid.UUID, accept: bool) -
 
 async def entry_patch_submit(info: Info, recaptcha: str, entry_id: uuid.UUID, title: str, status: str, tags: list[str],
                              description: str, illustration: str) -> ApiError | EntryMessagePatchGQL:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 

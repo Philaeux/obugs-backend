@@ -17,7 +17,8 @@ from obugs.utils.helpers import check_user
 
 async def entry_create(info: Info, recaptcha: str, software_id: str, title: str, tags: list[str], description: str,
                        illustration: str) -> ApiError | EntryGQL:
-    current_user = check_user(info.context)
+    current_user = check_user(info.context["settings"].jwt_secret_key,
+                              info.context["request"].headers.get("Authorization"))
     if current_user is None:
         return ApiError(message="Not logged client")
 

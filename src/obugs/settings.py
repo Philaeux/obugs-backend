@@ -30,7 +30,7 @@ class Settings(metaclass=SingletonMeta):
     reddit_client: str = "make-an-application"
     reddit_secret: str = "change-me"
 
-    def __init__(self):
+    def load_from_ini(self):
         """Create a default configuration, then read from settings.ini"""
         cfg = configparser.ConfigParser()
         cfg.read(Path(__file__).parent / ".." / "settings.ini")
